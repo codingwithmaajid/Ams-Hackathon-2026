@@ -2,13 +2,10 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-COPY pyproject.toml uv.lock ./
-
-RUN pip install uv \
-    && uv sync --frozen --no-dev
+RUN pip install uv
 
 COPY . .
 
-EXPOSE 8000
+RUN uv sync --frozen --no-dev
 
-CMD ["uv", "run", "uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "uv run uvicorn server:app --host 0.0.0.0 --port ${PORT:-8000}"]
