@@ -16,6 +16,3 @@
 🔐 Secrets	Render environment variables
 📞 Telephony	LiveKit SIP / telephony layer later
 🐟 Experimental TTS	Fish Speech later
-
-export SNAP_SERVE_API_KEY='sk_live_782b9eb100e52dacfffd593bb3f9630eeed37f45fc73c71876be7fd38d4bf72c'
->>>>>>> 88b1931 (added voice📞)
