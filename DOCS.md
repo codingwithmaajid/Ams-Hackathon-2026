@@ -4,18 +4,74 @@
 
 Current implementation inspected:
 
-- Backend framework: FastAPI in `server.py`.
-- Frontend framework: no frontend framework; `GET /` returns inline HTML and JavaScript.
+- Backend framework: FastAPI in `backend/main.py`; `server.py` remains a compatibility shim.
+- Frontend framework: React/Vite application in `frontend/`.
 - Package management: `uv` with `pyproject.toml` and `uv.lock`.
 - Python version: `>=3.12`.
-- Docker: `python:3.12-slim`, installs `uv`, runs `uvicorn server:app`.
+- Docker: `python:3.12-slim`, installs `uv`, runs `uvicorn backend.main:app`.
+- Existing API: `GET /` returns service metadata.
+- Existing API: `GET /health` returns lightweight service health.
 - Existing API: `POST /call` starts a SnapServe outbound call.
 - Existing voice provider: SnapServe outbound call API.
 - Existing AI integrations: none.
 - Existing RAG implementation: none.
 - Existing database: none.
-- Existing environment variable: `SNAPSERVE_API_KEY`.
+- Existing environment variables: `APP_ENV`, `APP_NAME`, `APP_VERSION`, `LOG_LEVEL`, `CORS_ORIGINS`, and `SNAPSERVE_API_KEY`.
 - Existing deployment target: Render, based on project context.
+
+## Milestone 1 Backend Foundation
+
+Implemented backend structure:
+
+```text
+backend/
+    __init__.py
+    main.py
+    api/
+        __init__.py
+        health.py
+        snapserve.py
+    core/
+        __init__.py
+        config.py
+        logging.py
+    models/
+        __init__.py
+    services/
+        __init__.py
+
+tests/
+    test_health.py
+```
+
+Current endpoints:
+
+```text
+GET /
+GET /health
+POST /call
+```
+
+`/api/v1/` is reserved as the prefix for future APIs. No case, document, RAG, agent, hearing, approval, notification, or scheduling APIs exist yet.
+
+Configuration:
+
+- `APP_ENV`, default `local`.
+- `APP_NAME`, default `AIRA`.
+- `APP_VERSION`, default `0.1.0`.
+- `LOG_LEVEL`, default `INFO`.
+- `CORS_ORIGINS`, default `http://localhost:5173`.
+
+Future configuration placeholders:
+
+- `DATABASE_URL`
+- `LLM_API_KEY`
+- `EMBEDDING_API_KEY`
+- `VOICE_API_KEY`
+- `STORAGE_BUCKET`
+- `VECTOR_DATABASE_URL`
+
+These future services are not integrated yet.
 
 ## System Architecture
 

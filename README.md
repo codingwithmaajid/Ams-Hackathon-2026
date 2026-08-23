@@ -19,8 +19,9 @@ AIRA must not replace judges. It must not determine guilt, liability, sentence, 
 Implemented:
 
 - FastAPI backend.
-- Simple browser form for starting an outbound phone call.
+- React/Vite frontend scaffold.
 - SnapServe outbound call integration.
+- Backend service metadata and health endpoints.
 - Docker-based deployment setup.
 - Environment-variable based SnapServe secret handling.
 

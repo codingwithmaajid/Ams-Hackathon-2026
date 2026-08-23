@@ -6,8 +6,8 @@ This document describes selected and candidate technologies for the hackathon MV
 
 | Area | Current State |
 | --- | --- |
-| Backend | FastAPI in `server.py` |
-| Frontend | Inline HTML/JavaScript served by FastAPI |
+| Backend | FastAPI in `backend/main.py`; `server.py` is a compatibility shim |
+| Frontend | React/Vite app in `frontend/` |
 | Package manager | `uv` |
 | Python | `>=3.12` |
 | HTTP client | `requests` |
@@ -22,13 +22,13 @@ This document describes selected and candidate technologies for the hackathon MV
 
 ### Selected For Current Prototype
 
-Technology: Inline HTML/JavaScript served by FastAPI.
+Technology: React/Vite frontend scaffold.
 
 Why:
 
 - Already exists.
-- Simple enough for starting SnapServe calls.
-- No frontend build pipeline required.
+- Appropriate for a future review dashboard with documents, citations, timelines, and approvals.
+- Kept unchanged during Milestone 1.
 
 Alternatives:
 
@@ -38,7 +38,7 @@ Alternatives:
 
 Tradeoffs:
 
-- Inline HTML is fast for the prototype but poor for a full document-review workflow.
+- React/Vite is more setup than inline HTML, but the repository already contains it.
 - A richer review UI may be needed for citations, timelines, approvals, and document viewing.
 
 ### Planned MVP Direction
@@ -83,6 +83,8 @@ Python version:
 API architecture:
 
 - Current: `POST /call` for outbound SnapServe calls.
+- Current: `GET /` for backend service metadata.
+- Current: `GET /health` for lightweight health checks.
 - Planned: protected agent/conversation endpoints after contracts are defined.
 
 Background jobs:

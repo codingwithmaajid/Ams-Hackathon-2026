@@ -20,17 +20,18 @@ Implemented application capabilities:
 - Keep the SnapServe key server-side.
 - Basic request validation for the current call launcher.
 - Basic HTTP error handling for SnapServe failures.
+- Milestone 1 backend foundation.
+- `GET /` service metadata endpoint.
+- `GET /health` lightweight health endpoint.
+- Environment-based backend configuration.
+- Structured JSON application logging.
+- Consistent JSON error responses.
+- Configurable CORS origins for local frontend development.
+- Pytest coverage for root, health, and validation errors.
 
 ## IN PROGRESS
 
-Planning:
-
-- Product requirements.
-- Technical architecture.
-- Technology selection.
-- Human-in-the-loop boundaries.
-- Security and threat model.
-- Hackathon MVP scope.
+No implementation milestone is currently in progress.
 
 ## PLANNED
 
@@ -50,6 +51,7 @@ Product capabilities:
 
 Technical capabilities:
 
+- Milestone 2 - Database and case management.
 - LangGraph single-agent workflow.
 - RAG ingestion and retrieval.
 - Object storage for documents.
@@ -91,25 +93,26 @@ The following require human confirmation before implementation:
 
 ## NEXT STEPS
 
+NEXT:
+
+Milestone 2 - Database and case management.
+
 P0 - MVP critical:
 
-1. Confirm the exact demo case domain and user role.
-2. Create synthetic Case 1042 fixture documents.
-3. Define data contracts for case, document, hearing, event, citation, task, and approval objects.
-4. Define tool contracts before implementing tools.
-5. Define pre-hearing brief schema.
-6. Define approval policy matrix.
-7. Define the first evaluation checklist for Case 1042.
-8. Confirm SnapServe inbound conversation integration path.
+1. Define the minimal case model.
+2. Choose the Milestone 2 persistence approach.
+3. Add case management APIs only after contracts are agreed.
+4. Add tests for case creation/listing/retrieval.
+5. Keep RAG, AI agent, embeddings, voice integration, and document processing out of Milestone 2 unless explicitly re-scoped.
 
 P1 - Important:
 
-1. Add authentication and role assumptions for the demo.
-2. Add persistent storage plan.
-3. Add retrieval evaluation metrics.
-4. Add structured audit event model.
-5. Add failure handling matrix.
-6. Plan UI for reviewing briefs and citations.
+1. Confirm the exact demo case domain and user role.
+2. Create synthetic Case 1042 fixture documents.
+3. Define tool contracts before implementing tools.
+4. Define pre-hearing brief schema.
+5. Define approval policy matrix.
+6. Confirm SnapServe inbound conversation integration path.
 
 P2 - Future:
 
@@ -127,10 +130,23 @@ Implementation is not started for the judicial assistant itself.
 The existing code is only a voice-call integration prototype:
 
 ```text
-Browser form
-  -> FastAPI
+Frontend or API client
+  -> FastAPI backend
   -> SnapServe outbound call API
   -> Phone call
+```
+
+Milestone 1 backend foundation:
+
+```text
+backend.main:app
+  -> GET /
+  -> GET /health
+  -> POST /call
+  -> configuration
+  -> logging
+  -> error handling
+  -> CORS
 ```
 
 Target planned architecture:
