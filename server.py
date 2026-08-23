@@ -1,24 +1,71 @@
+import logging
 import os
 import requests
 
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import HTMLResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 load_dotenv()
 
-SNAPSERVE_API_KEY = os.getenv("SNAPSERVE_API_KEY")
-
-if not SNAPSERVE_API_KEY:
-    raise RuntimeError("SNAPSERVE_API_KEY is missing from .env")
+SNAPSERVE_OUTBOUND_CALL_URL = "https://app.snapserve.ai/api/calls/outbound"
 
 app = FastAPI()
+logger = logging.getLogger(__name__)
 
 
 class CallRequest(BaseModel):
-    agent_id: int
-    phone_number: str
+    agent_id: int = Field(gt=0)
+    phone_number: str = Field(min_length=8, max_length=32)
+
+
+def get_snapserve_api_key() -> str:
+    api_key = os.getenv("SNAPSERVE_API_KEY")
+
+    if not api_key:
+        raise HTTPException(
+            status_code=500,
+            detail="SNAPSERVE_API_KEY is not configured.",
+        )
+
+    return api_key
+
+
+def create_snapserve_call(request: CallRequest) -> dict:
+    response = requests.post(
+        SNAPSERVE_OUTBOUND_CALL_URL,
+        headers={
+            "Authorization": f"Bearer {get_snapserve_api_key()}",
+            "Content-Type": "application/json",
+        },
+        json={
+            "agentId": request.agent_id,
+            "toNumber": request.phone_number,
+        },
+        timeout=30,
+    )
+
+    if not response.ok:
+        logger.warning(
+            "SnapServe outbound call failed with status %s: %s",
+            response.status_code,
+            response.text,
+        )
+        raise HTTPException(
+            status_code=response.status_code,
+            detail=response.text or "SnapServe call failed.",
+        )
+
+    try:
+        return response.json()
+    except ValueError as exc:
+        logger.exception("SnapServe returned a non-JSON response")
+        raise HTTPException(
+            status_code=502,
+            detail="SnapServe returned an invalid response.",
+        ) from exc
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -156,34 +203,13 @@ async def home():
 
 @app.post("/call")
 async def make_call(request: CallRequest):
+    logger.info("Starting SnapServe call to %s", request.phone_number)
 
-    print(
-        f"📞 Starting call to {request.phone_number}"
-    )
-
-    response = requests.post(
-        "https://app.snapserve.ai/api/calls/outbound",
-
-        headers={
-            "Authorization": f"Bearer {SNAPSERVE_API_KEY}",
-            "Content-Type": "application/json",
-        },
-
-        json={
-            "agentId": request.agent_id,
-            "toNumber": request.phone_number,
-        },
-
-        timeout=30,
-    )
-
-    print("SnapServe:", response.status_code)
-    print(response.text)
-
-    if not response.ok:
-        return {
-            "status": "error",
-            "message": response.text,
-        }
-
-    return response.json()
+    try:
+        return await run_in_threadpool(create_snapserve_call, request)
+    except requests.RequestException as exc:
+        logger.exception("SnapServe request failed")
+        raise HTTPException(
+            status_code=502,
+            detail="Could not reach SnapServe.",
+        ) from exc

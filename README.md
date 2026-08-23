@@ -1,61 +1,194 @@
-# Aira — Voice AI Agentic System
+# AIRA - AI Judicial Workflow Assistant
 
-Aira is a production-oriented voice AI system built for the **AMS Hackathon 2026**.
+AIRA is a planned voice-first judicial workflow assistant for the AMS Hackathon 2026.
 
-It combines phone-based voice interaction with an agentic backend capable of reasoning, retrieving knowledge, using tools, maintaining state, and performing actions.
+Tagline: Human decides. AI prepares, coordinates, executes, and tracks.
 
-## Architecture
+## Problem
+
+Courts and judicial staff handle large volumes of case documents, filings, hearing records, previous orders, schedules, postponements, missing documents, and administrative follow-up. Much of this work is repetitive and time-sensitive, but the judicial decision must remain with the authorized human judge.
+
+## Solution
+
+AIRA is designed to help authorized judicial users prepare for hearings and manage case workflow. The system should retrieve authorized case material, classify documents, build timelines, identify missing items, prepare source-grounded briefs, and coordinate approved administrative follow-up.
+
+AIRA must not replace judges. It must not determine guilt, liability, sentence, verdict, case outcome, or whether a party should win or lose.
+
+## Current Status
+
+Implemented:
+
+- FastAPI backend.
+- Simple browser form for starting an outbound phone call.
+- SnapServe outbound call integration.
+- Docker-based deployment setup.
+- Environment-variable based SnapServe secret handling.
+
+Planned:
+
+- Judicial case preparation workflow.
+- LangGraph agent runtime.
+- Case document RAG.
+- Case, document, hearing, timeline, workflow, and approval tools.
+- Human approval workflows.
+- PostgreSQL/Supabase persistence.
+- Audit logging and observability.
+
+Not implemented yet:
+
+- Judicial agent.
+- RAG pipeline.
+- Database schema.
+- Document ingestion.
+- Case timeline builder.
+- Pre-hearing brief generator.
+- Human approval UI.
+- Authentication and RBAC.
+
+## Flagship Workflow
+
+The hackathon MVP centers on one workflow:
 
 ```text
-Phone Call
-    ↓
-SnapServe
-    ↓
-FastAPI
-    ↓
-LangGraph Agent
-    ├── LLM Inference
-    ├── RAG
-    ├── Tools
-    ├── Memory / State
-    └── Business Logic
-    ↓
-Supabase / External Services
+Judge: "Prepare Case 1042 for tomorrow."
+
+AIRA:
+1. Identifies the case.
+2. Retrieves authorized documents.
+3. Searches the case knowledge base.
+4. Builds the procedural timeline.
+5. Finds hearing history.
+6. Detects postponements.
+7. Identifies missing documents.
+8. Generates a source-grounded pre-hearing brief.
+9. Presents the brief for review.
+10. Waits for the human judicial decision.
+11. Executes only approved administrative follow-up.
 ```
 
-## Core Stack
+## Architecture Overview
 
-* **Voice:** SnapServe
-* **Backend:** FastAPI
-* **Agent orchestration:** LangGraph
-* **LLM:** LLM inference provider
-* **RAG:** Vector database + embeddings
-* **Database:** Supabase / PostgreSQL
-* **Deployment:** Render
-* **Containerization:** Docker
-* **Observability:** Planned
+```text
+Judge / Authorized Staff
+        |
+        v
+Voice Interface - SnapServe
+        |
+        v
+FastAPI Application
+        |
+        v
+LangGraph Judicial Workflow Agent
+        |
+        +--> Case Tools
+        +--> Document Tools
+        +--> Hearing Tools
+        +--> Timeline Tools
+        +--> Workflow Tools
+        +--> Human Approval Tools
+        |
+        v
+RAG / Knowledge Layer
+        |
+        v
+PostgreSQL / Supabase + Object Storage + Vector Index
+```
 
-## Project Goal
+Voice is an interface to the agent. It is not the intelligence layer.
 
-Build a reliable voice-first agent that can:
+## Human In The Loop
 
-* Understand natural language conversations
-* Retrieve information from a controlled knowledge base
-* Decide when tools are required
-* Execute validated actions
-* Maintain conversation state
-* Handle failures safely
-* Operate through a real phone call
+AIRA uses bounded autonomy:
 
-The system will be developed incrementally, with reliability, observability, latency, security, and evaluation considered from the beginning.
+- Level 0: AI provides information only.
+- Level 1: AI recommends workflow actions.
+- Level 2: AI prepares actions for approval.
+- Level 3: AI executes pre-authorized administrative actions.
+- Level 4: Prohibited for judicial decisions.
 
-## Status
+Every legally consequential output must remain subject to human review and authorization.
 
-**Phase:** Architecture & Planning
+## RAG And Source Grounding
 
-Implementation will begin only after the architecture, agent contracts, workflows, and development plan are documented.
+The planned RAG system will retrieve information from authorized case documents and provide citations. Case summaries and pre-hearing briefs should avoid unsupported factual claims. Uploaded documents are treated as untrusted data, not as instructions to the agent.
 
-See:
+## Planned Agent Tools
 
-* [`docs.md`](./docs.md) — technical architecture and development process
-* [`status.md`](./status.md) — implementation status and timeline
+Planned tool groups:
+
+- Case tools: get case, search cases, get/update case status.
+- Document tools: search, retrieve, classify, extract metadata, find missing documents.
+- Hearing tools: hearing history, next hearing, postponements, create/update hearings.
+- Timeline tools: build case timeline, retrieve events.
+- Workflow tools: tasks, notifications, deadlines.
+- Knowledge tools: semantic search, keyword search, source retrieval, citation lookup.
+- Generation tools: summaries, pre-hearing briefs, draft administrative documents.
+- Approval tools: request approval, record approval, reject action.
+
+## Security Philosophy
+
+AIRA will handle sensitive legal information, so the planned architecture requires authentication, authorization, role-based access control, case-level isolation, audit logging, secret management, encryption, document provenance, and prompt-injection protections.
+
+Secrets such as `SNAPSERVE_API_KEY`, LLM keys, database URLs, and Supabase credentials must never be committed to Git or exposed to frontend JavaScript.
+
+## Roadmap
+
+P0 MVP critical:
+
+- Define case preparation workflow.
+- Define data contracts and tool contracts.
+- Add sample case documents for controlled demo data.
+- Build source-grounded pre-hearing brief workflow.
+- Add human review and approval checkpoints.
+
+P1 important:
+
+- Persistent case and hearing state.
+- Observability and audit logging.
+- Role-based access.
+- Better retrieval evaluation.
+- Voice-to-agent integration.
+
+P2 future:
+
+- Multilingual support.
+- Postponement analytics.
+- Advanced scheduling.
+- Broader workflow automation.
+- Institutional compliance review.
+
+## Development Setup
+
+Current local setup is intentionally small:
+
+```text
+uv sync
+uv run uvicorn server:app --reload
+```
+
+Required environment variable for the current SnapServe call launcher:
+
+```text
+SNAPSERVE_API_KEY
+```
+
+## Deployment
+
+The current app is Dockerized and intended for Render deployment. Future deployment will need environment secrets, database services, object storage, vector storage, and observability configuration.
+
+## Limitations
+
+This repository is not a production court system. A real judicial deployment would require legal, regulatory, privacy, security, accessibility, procurement, operational, and institutional review.
+
+The current implementation is a voice-call integration prototype, not a complete judicial assistant.
+
+## Responsible AI Statement
+
+AIRA must support judicial workflow without replacing judicial authority. The system should expose uncertainty, cite sources, avoid unsupported claims, require human approval for consequential actions, preserve auditability, and keep case data isolated.
+
+## Planning Documents
+
+- [PRD.md](./PRD.md) - product requirements.
+- [DOCS.md](./DOCS.md) - technical architecture.
+- [TECHSTACK.md](./TECHSTACK.md) - technology choices and tradeoffs.
+- [STATUS.md](./STATUS.md) - current status and roadmap.
