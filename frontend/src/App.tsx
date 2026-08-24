@@ -7,6 +7,7 @@ import CallsPage from "@/pages/calls";
 import EmailsPage from "@/pages/emails";
 import KnowledgePage from "@/pages/knowledge";
 import ReportsPage from "@/pages/reports";
+import HealthPage from "@/pages/health";
 
 export default function App() {
   return (
@@ -23,6 +24,7 @@ export default function App() {
                 <Route path="/emails" element={<EmailsPage />} />
                 <Route path="/knowledge" element={<KnowledgePage />} />
                 <Route path="/reports" element={<ReportsPage />} />
+                <Route path="/health" element={<HealthPage />} />
               </Routes>
             </main>
           </div>
