@@ -1,3 +1,8 @@
+# backend/main.py
+from backend.api.snapserve import router as snapserve_router #
+
+app.include_router(snapserve_router)
+
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.encoders import jsonable_encoder

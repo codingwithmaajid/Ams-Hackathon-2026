@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Phone, PhoneCall, Play } from "lucide-react";
+import { Phone, PhoneCall, Play, AlertCircle } from "lucide-react";
 
-import { useStore, type CallStatus } from "@/store";
+import { callsService } from "@/services/calls";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +14,21 @@ import {
 } from "@/components/ui/card";
 import { PageHeader } from "@/components/layout/page-header";
 
+type CallStatus = "queued" | "in-progress" | "completed" | "failed";
+
+interface Call {
+  id: number;
+  contact: string;
+  phone: string;
+  objective: string;
+  status: CallStatus;
+  startedAt: string;
+  duration?: string;
+  summary?: string;
+  sentiment?: "positive" | "neutral" | "negative";
+  backendCallId?: string;
+}
+
 const STATUS_BADGE: Record<CallStatus, string> = {
   queued: "bg-stone-200 text-stone-700",
   "in-progress": "bg-amber-100 text-amber-800",
@@ -21,19 +36,64 @@ const STATUS_BADGE: Record<CallStatus, string> = {
   failed: "bg-red-100 text-red-800",
 };
 
+const DEFAULT_AGENT_ID = 1;
+
+function clock() {
+  return new Date().toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export default function CallsPage() {
-  const { calls, startCall } = useStore();
+  const [calls, setCalls] = useState<Call[]>([]);
   const [contact, setContact] = useState("");
   const [phone, setPhone] = useState("");
   const [objective, setObjective] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!contact.trim() || !phone.trim()) return;
-    startCall(contact.trim(), phone.trim(), objective.trim() || "General check-in");
+
+    setLoading(true);
+    setError(null);
+
+    const newCall: Call = {
+      id: Date.now(),
+      contact: contact.trim(),
+      phone: phone.trim(),
+      objective: objective.trim() || "General check-in",
+      status: "queued",
+      startedAt: clock(),
+    };
+
+    setCalls((prev) => [newCall, ...prev]);
     setContact("");
     setPhone("");
     setObjective("");
+
+    try {
+      const response = await callsService.placeCall(DEFAULT_AGENT_ID, phone.trim());
+      
+      setCalls((prev) =>
+        prev.map((c) =>
+          c.id === newCall.id
+            ? { ...c, status: "in-progress", backendCallId: response.call_id }
+            : c
+        )
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to place call");
+      setCalls((prev) =>
+        prev.map((c) =>
+          c.id === newCall.id ? { ...c, status: "failed" } : c
+        )
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const active = calls.some(
@@ -45,15 +105,22 @@ export default function CallsPage() {
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-4 p-4 md:gap-6 md:p-6">
         <PageHeader
           title="Calls"
-          description="Dispatch Aira to place calls. Outcomes and recaps are filed to Reports automatically."
+          description="Dispatch Aira to place calls via SnapServe. Outcomes and recaps are filed to Reports automatically."
         />
+
+        {error && (
+          <div className="flex items-center gap-2 rounded-lg bg-red-50 p-3 text-red-700">
+            <AlertCircle className="size-4" />
+            <span className="text-sm">{error}</span>
+          </div>
+        )}
 
         <div className="grid gap-4 md:gap-6 lg:grid-cols-[340px_minmax(0,1fr)]">
           <Card>
             <CardHeader>
               <CardTitle>Start a call</CardTitle>
               <CardDescription>
-                Aira dials, talks using your knowledge base, then logs the recap.
+                Aira dials via SnapServe, talks using your knowledge base, then logs the recap.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -87,13 +154,12 @@ export default function CallsPage() {
                     className="resize-y rounded-lg border border-input bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30"
                   />
                 </label>
-                <Button type="submit" size="lg" disabled={!contact.trim() || !phone.trim()}>
+                <Button type="submit" size="lg" disabled={!contact.trim() || !phone.trim() || loading}>
                   <Play className="size-4" />
-                  Place call
+                  {loading ? "Placing call…" : "Place call"}
                 </Button>
                 <p className="text-xs text-muted-foreground">
-                  Tone and talking points come from your saved context in
-                  Knowledge.
+                  Tone and talking points come from your saved context in Knowledge.
                 </p>
               </form>
             </CardContent>
@@ -113,58 +179,61 @@ export default function CallsPage() {
               <CardDescription>Newest first · live status</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-3">
-              {calls.map((c) => (
-                <div
-                  key={c.id}
-                  className="rounded-xl border border-border/70 bg-background p-3"
-                >
-                  <div className="flex items-start gap-3">
-                    <span
-                      className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${
-                        c.status === "completed"
-                          ? "bg-emerald-100 text-emerald-700"
-                          : c.status === "in-progress" ||
+              {calls.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">
+                  No calls yet. Place your first call above.
+                </p>
+              ) : (
+                calls.map((c) => (
+                  <div
+                    key={c.id}
+                    className="rounded-xl border border-border/70 bg-background p-3"
+                  >
+                    <div className="flex items-start gap-3">
+                      <span
+                        className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${
+                          c.status === "completed"
+                            ? "bg-emerald-100 text-emerald-700"
+                            : c.status === "in-progress" ||
                               c.status === "queued"
                             ? "bg-amber-100 text-amber-700"
-                            : "bg-stone-200 text-stone-600"
-                      }`}
-                    >
-                      {c.status === "in-progress" ? (
-                        <PhoneCall className="size-4 animate-pulse" />
-                      ) : (
-                        <Phone className="size-4" />
-                      )}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-sm font-medium">{c.contact}</p>
-                        <Badge className={`border-transparent ${STATUS_BADGE[c.status]}`}>
-                          {c.status}
-                        </Badge>
+                            : "bg-red-100 text-red-700"
+                        }`}
+                      >
+                        {c.status === "in-progress" ? (
+                          <PhoneCall className="size-4 animate-pulse" />
+                        ) : (
+                          <Phone className="size-4" />
+                        )}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-sm font-medium">{c.contact}</p>
+                          <Badge className={`border-transparent ${STATUS_BADGE[c.status]}`}>
+                            {c.status}
+                          </Badge>
+                        </div>
+                        <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                          <span className="font-mono">{c.phone}</span> · {c.objective}
+                        </p>
+                        {c.backendCallId && (
+                          <p className="mt-1 text-xs font-mono text-muted-foreground">
+                            SnapServe Call ID: {c.backendCallId}
+                          </p>
+                        )}
+                        {(c.status === "queued" || c.status === "in-progress") && (
+                          <p className="mt-2 animate-pulse font-mono text-xs text-muted-foreground">
+                            ▍agent working — call placed via SnapServe…
+                          </p>
+                        )}
                       </div>
-                      <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                        <span className="font-mono">{c.phone}</span> · {c.objective}
-                      </p>
-                      {c.status === "completed" && c.summary && (
-                        <p className="mt-2 border-l-2 border-border pl-2.5 text-sm leading-relaxed text-muted-foreground">
-                          {c.summary}{" "}
-                          <span className="font-mono text-xs">
-                            ({c.duration}, felt {c.sentiment})
-                          </span>
-                        </p>
-                      )}
-                      {(c.status === "queued" || c.status === "in-progress") && (
-                        <p className="mt-2 animate-pulse font-mono text-xs text-muted-foreground">
-                          ▍agent working — will file report when done…
-                        </p>
-                      )}
+                      <span className="shrink-0 font-mono text-xs text-muted-foreground">
+                        {c.startedAt}
+                      </span>
                     </div>
-                    <span className="shrink-0 font-mono text-xs text-muted-foreground">
-                      {c.startedAt}
-                    </span>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </CardContent>
           </Card>
         </div>
