@@ -62,7 +62,7 @@ function answerFromKnowledge(
 }
 
 const GREETING =
-  "Hi, I'm Aira — your agent. I read your knowledge base, then call, email, and file reports for you.\nTry: help · call John · email sara@lumenworks.io";
+  "Hi, I'm Aira — your demo console. I can answer from the local knowledge base here, but I do not place real SnapServe calls from this chat.\nFor real calling, open the Calls page. Try: help · sources · status";
 
 const SUGGESTIONS = ["help", "call john", "email sara@lumenworks.io", "status"] as const;
 
@@ -135,7 +135,7 @@ export function AgentConsole() {
         replyText = [
           "Here's what I can do:",
           "",
-          "  call <name>          place a call and file a report",
+          "  call <name>          demo-only console action (not a real phone call)",
           "  email <address>      draft + send an email, log it",
           "  status               mesh health overview",
           "  sources              what's in the knowledge base",
@@ -165,7 +165,7 @@ export function AgentConsole() {
           "+1 555 01xx",
           `Follow-up requested via console at ${clock()}`
         );
-        replyText = `Calling ${contact} now using your knowledge-base context. I'll file the details on the Reports page when we're done.`;
+        replyText = `This console only simulates a call for ${contact}. For a real SnapServe phone call, open the Calls page and enter the actual phone number there.`;
         break;
       }
       case "email": {

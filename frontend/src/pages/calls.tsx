@@ -36,7 +36,7 @@ const STATUS_BADGE: Record<CallStatus, string> = {
   failed: "bg-red-100 text-red-800",
 };
 
-const DEFAULT_AGENT_ID = 1;
+const DEFAULT_AGENT_ID = Number(import.meta.env.VITE_SNAPSERVE_AGENT_ID ?? 825);
 
 function clock() {
   return new Date().toLocaleTimeString("en-GB", {
@@ -105,7 +105,7 @@ export default function CallsPage() {
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-4 p-4 md:gap-6 md:p-6">
         <PageHeader
           title="Calls"
-          description="Dispatch Aira to place calls via SnapServe. Outcomes and recaps are filed to Reports automatically."
+          description="This is the real call form. Enter a contact and phone number here to place a SnapServe call from the frontend."
         />
 
         {error && (
@@ -158,9 +158,11 @@ export default function CallsPage() {
                   <Play className="size-4" />
                   {loading ? "Placing call…" : "Place call"}
                 </Button>
-                <p className="text-xs text-muted-foreground">
-                  Tone and talking points come from your saved context in Knowledge.
-                </p>
+                <div className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">
+                  <p><strong>How this works:</strong> this page sends your input to the backend, and the backend places the real SnapServe call.</p>
+                  <p className="mt-1">Use a full phone number like <span className="font-mono">+919876543210</span>. The chat console on the home page is only a local demo and does not place real calls.</p>
+                  <p className="mt-1">Current agent ID: <span className="font-mono">{DEFAULT_AGENT_ID}</span></p>
+                </div>
               </form>
             </CardContent>
           </Card>

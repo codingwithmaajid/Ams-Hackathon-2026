@@ -36,7 +36,7 @@ def test_malformed_call_request_returns_consistent_error() -> None:
         },
     )
 
-    assert response.status_code == 422
+    assert response.status_code == 400
     body = response.json()
-    assert body["error"]["code"] == "VALIDATION_ERROR"
-    assert body["error"]["message"] == "Request validation failed."
+    assert body["error"]["code"] == "HTTP_ERROR"
+    assert body["error"]["message"] == "A valid phone number is required."

@@ -27,6 +27,9 @@ class Settings:
     voice_api_key: Optional[str] = None
     storage_bucket: Optional[str] = None
     vector_database_url: Optional[str] = None
+    snapserve_api_key: Optional[str] = None
+    snapserve_base_url: str = "https://app.snapserve.ai/api"
+    snapserve_from_number: Optional[str] = None
 
 
 def get_settings() -> Settings:
@@ -46,4 +49,7 @@ def get_settings() -> Settings:
         voice_api_key=os.getenv("VOICE_API_KEY"),
         storage_bucket=os.getenv("STORAGE_BUCKET"),
         vector_database_url=os.getenv("VECTOR_DATABASE_URL"),
+        snapserve_api_key=os.getenv("SNAPSERVE_API_KEY"),
+        snapserve_base_url=_get_env("SNAPSERVE_BASE_URL", "https://app.snapserve.ai/api"),
+        snapserve_from_number=os.getenv("SNAPSERVE_FROM_NUMBER"),
     )

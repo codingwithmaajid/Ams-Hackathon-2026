@@ -1,8 +1,3 @@
-# backend/main.py
-from backend.api.snapserve import router as snapserve_router #
-
-app.include_router(snapserve_router)
-
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.encoders import jsonable_encoder
@@ -53,10 +48,6 @@ def register_routes(app: FastAPI, settings: Settings) -> None:
         }
 
     app.include_router(health_router)
-
-    api_v1 = FastAPI(title=f"{settings.app_name} API v1")
-    app.mount("/api/v1", api_v1)
-
     app.include_router(snapserve_router)
 
 
