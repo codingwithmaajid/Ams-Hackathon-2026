@@ -11,7 +11,20 @@ export interface CallResponse {
   message: string;
 }
 
+export interface CallStatusResponse {
+  call_id: string;
+  status: string;
+  duration_seconds: number | null;
+  transcript: string | null;
+  error_message: string | null;
+}
+
 export const callsService = {
   placeCall: (agentId: number, phoneNumber: string) =>
-    apiClient.post<CallResponse>('/call', { agent_id: agentId, phone_number: phoneNumber }),
+    apiClient.post<CallResponse>('/call', {
+      agent_id: agentId,
+      phone_number: phoneNumber,
+    }),
+  getStatus: (callId: string) =>
+    apiClient.get<CallStatusResponse>(`/call/${callId}`),
 };

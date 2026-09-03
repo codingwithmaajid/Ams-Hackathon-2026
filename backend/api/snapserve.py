@@ -21,6 +21,14 @@ class CallResponse(BaseModel):
     call_id: str | None = None
 
 
+class CallStatusResponse(BaseModel):
+    call_id: str
+    status: str
+    duration_seconds: int | None = None
+    transcript: str | None = None
+    error_message: str | None = None
+
+
 def _get_settings(request: Request) -> Settings:
     return request.app.state.settings
 
@@ -84,7 +92,7 @@ async def trigger_call(payload: CallRequest, request: Request) -> CallResponse:
 
     try:
         response = requests.post(
-            f"{settings.snapserve_base_url}/calls",
+            f"{settings.snapserve_base_url}/calls/outbound",
             headers=_build_auth_headers(settings.snapserve_api_key),
             json={
                 "agentId": agent_id,
@@ -116,4 +124,42 @@ async def trigger_call(payload: CallRequest, request: Request) -> CallResponse:
         status=str(data.get("status", "initiated")),
         message=f"Agent call dispatched to {phone}",
         call_id=str(data.get("id")) if data.get("id") is not None else None,
+    )
+
+
+@router.get("/call/{call_id}", response_model=CallStatusResponse, status_code=status.HTTP_200_OK)
+async def get_call_status(call_id: str, request: Request) -> CallStatusResponse:
+    settings = _get_settings(request)
+
+    if not settings.snapserve_api_key:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="SNAPSERVE_API_KEY is not configured on the server.",
+        )
+
+    try:
+        response = requests.get(
+            f"{settings.snapserve_base_url}/calls/{call_id}",
+            headers=_build_auth_headers(settings.snapserve_api_key),
+            timeout=20,
+        )
+    except requests.RequestException as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"SnapServe status request failed: {exc}",
+        ) from exc
+
+    if response.status_code >= 400:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"SnapServe could not find call {call_id}.",
+        )
+
+    data = response.json()
+    return CallStatusResponse(
+        call_id=str(data.get("id", call_id)),
+        status=str(data.get("status", "unknown")),
+        duration_seconds=data.get("durationSeconds"),
+        transcript=data.get("transcript"),
+        error_message=data.get("errorMessage"),
     )

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Phone, PhoneCall, Play, AlertCircle } from "lucide-react";
 
 import { callsService } from "@/services/calls";
@@ -39,12 +39,30 @@ const STATUS_BADGE: Record<CallStatus, string> = {
 
 const DEFAULT_AGENT_ID = Number(import.meta.env.VITE_SNAPSERVE_AGENT_ID ?? 825);
 
+const TERMINAL_SNAPSERVE_STATUSES = new Set([
+  "completed",
+  "failed",
+  "no_pickup",
+  "busy",
+  "error",
+  "cancelled",
+]);
+
+function mapSnapServeStatus(snapStatus: string): CallStatus {
+  const normalized = snapStatus.toLowerCase();
+  if (normalized === "completed") return "completed";
+  if (TERMINAL_SNAPSERVE_STATUSES.has(normalized)) return "failed";
+  return "in-progress";
+}
+
 function clock() {
   return new Date().toLocaleTimeString("en-GB", {
     hour: "2-digit",
     minute: "2-digit",
   });
 }
+
+const MAX_POLL_ATTEMPTS = 30; // ~2 minutes at 4s intervals
 
 export default function CallsPage() {
   const [calls, setCalls] = useState<Call[]>([]);
@@ -53,6 +71,71 @@ export default function CallsPage() {
   const [objective, setObjective] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const pollTimers = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
+
+  useEffect(() => {
+    const timers = pollTimers.current;
+    return () => {
+      timers.forEach((t) => clearTimeout(t));
+      timers.clear();
+    };
+  }, []);
+
+  const pollCallStatus = (localId: number, callId: string, attempt = 0) => {
+    const timer = setTimeout(async () => {
+      if (attempt >= MAX_POLL_ATTEMPTS) {
+        setCalls((prev) =>
+          prev.map((row) =>
+            row.id === localId
+              ? {
+                  ...row,
+                  status: "failed",
+                  error: "Timed out waiting for SnapServe call status.",
+                }
+              : row
+          )
+        );
+        pollTimers.current.delete(localId);
+        return;
+      }
+
+      try {
+        const statusResponse = await callsService.getStatus(callId);
+        const mapped = mapSnapServeStatus(statusResponse.status);
+
+        setCalls((prev) =>
+          prev.map((row) =>
+            row.id === localId
+              ? {
+                  ...row,
+                  status: mapped,
+                  duration: statusResponse.duration_seconds
+                    ? `${statusResponse.duration_seconds}s`
+                    : row.duration,
+                  summary: statusResponse.transcript ?? row.summary,
+                  error:
+                    mapped === "failed"
+                      ? statusResponse.error_message ??
+                        `SnapServe status: ${statusResponse.status}`
+                      : row.error,
+                }
+              : row
+          )
+        );
+
+        if (mapped === "in-progress") {
+          pollCallStatus(localId, callId, attempt + 1);
+        } else {
+          pollTimers.current.delete(localId);
+        }
+      } catch {
+        // Transient status-check failure: keep trying rather than killing the row.
+        pollCallStatus(localId, callId, attempt + 1);
+      }
+    }, 4000);
+
+    pollTimers.current.set(localId, timer);
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,7 +160,7 @@ export default function CallsPage() {
 
     try {
       const response = await callsService.placeCall(DEFAULT_AGENT_ID, phone.trim());
-      
+
       setCalls((prev) =>
         prev.map((c) =>
           c.id === newCall.id
@@ -85,6 +168,10 @@ export default function CallsPage() {
             : c
         )
       );
+
+      if (response.call_id) {
+        pollCallStatus(newCall.id, response.call_id);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to place call");
       setCalls((prev) =>
@@ -232,7 +319,12 @@ export default function CallsPage() {
                         )}
                         {(c.status === "queued" || c.status === "in-progress") && (
                           <p className="mt-2 animate-pulse font-mono text-xs text-muted-foreground">
-                            ▍agent working — call placed via SnapServe…
+                            ▍agent working — call placed via SnapServe… checking status every few seconds
+                          </p>
+                        )}
+                        {c.status === "completed" && (
+                          <p className="mt-2 text-xs text-emerald-700">
+                            Call finished{c.duration ? ` · ${c.duration}` : ""}.
                           </p>
                         )}
                         {c.status === "failed" && c.error && (
