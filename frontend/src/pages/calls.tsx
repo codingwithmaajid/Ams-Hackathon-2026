@@ -27,6 +27,7 @@ interface Call {
   summary?: string;
   sentiment?: "positive" | "neutral" | "negative";
   backendCallId?: string;
+  error?: string;
 }
 
 const STATUS_BADGE: Record<CallStatus, string> = {
@@ -88,7 +89,13 @@ export default function CallsPage() {
       setError(err instanceof Error ? err.message : "Failed to place call");
       setCalls((prev) =>
         prev.map((c) =>
-          c.id === newCall.id ? { ...c, status: "failed" } : c
+          c.id === newCall.id
+            ? {
+                ...c,
+                status: "failed",
+                error: err instanceof Error ? err.message : "Failed to place call",
+              }
+            : c
         )
       );
     } finally {
@@ -226,6 +233,11 @@ export default function CallsPage() {
                         {(c.status === "queued" || c.status === "in-progress") && (
                           <p className="mt-2 animate-pulse font-mono text-xs text-muted-foreground">
                             ▍agent working — call placed via SnapServe…
+                          </p>
+                        )}
+                        {c.status === "failed" && c.error && (
+                          <p className="mt-2 text-xs text-red-600">
+                            {c.error}
                           </p>
                         )}
                       </div>
