@@ -16,8 +16,9 @@ Current implementation inspected:
 - Existing AI integrations: none.
 - Existing RAG implementation: none.
 - Existing database: none.
-- Existing environment variables: `APP_ENV`, `APP_NAME`, `APP_VERSION`, `LOG_LEVEL`, `CORS_ORIGINS`, and `SNAPSERVE_API_KEY`.
-- Existing deployment target: Render, based on project context.
+- Existing environment variables: `APP_ENV`, `APP_NAME`, `APP_VERSION`, `LOG_LEVEL`, `CORS_ORIGINS`, `SNAPSERVE_API_KEY`, `SNAPSERVE_BASE_URL`, and `SNAPSERVE_FROM_NUMBER`.
+- Existing deployment target: Render (see `render.yaml` and deployment steps below), based on project context.
+- Real SnapServe outbound calling is implemented via `backend/services/snapserve_client.py`, using the `/calls/outbound` endpoint (not the plain `/calls` endpoint, which only logs a record and never dials).
 
 ## Milestone 1 Backend Foundation
 
@@ -30,15 +31,17 @@ backend/
     api/
         __init__.py
         health.py
-        snapserve.py
+        calls.py           # thin routes: validation + orchestration only
     core/
         __init__.py
         config.py
         logging.py
     models/
         __init__.py
+        calls.py           # Pydantic request/response schemas
     services/
         __init__.py
+        snapserve_client.py # SnapServe HTTP integration (service layer)
 
 tests/
     test_health.py
@@ -47,9 +50,10 @@ tests/
 Current endpoints:
 
 ```text
-GET /
-GET /health
-POST /call
+GET  /
+GET  /health
+POST /call            # places a real outbound SnapServe call
+GET  /call/{call_id}  # polls real SnapServe call status
 ```
 
 `/api/v1/` is reserved as the prefix for future APIs. No case, document, RAG, agent, hearing, approval, notification, or scheduling APIs exist yet.

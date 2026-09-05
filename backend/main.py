@@ -5,8 +5,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from backend.api.calls import router as calls_router
 from backend.api.health import router as health_router
-from backend.api.snapserve import router as snapserve_router
 from backend.core.config import Settings, get_settings
 from backend.core.logging import configure_logging
 
@@ -48,7 +48,7 @@ def register_routes(app: FastAPI, settings: Settings) -> None:
         }
 
     app.include_router(health_router)
-    app.include_router(snapserve_router)
+    app.include_router(calls_router)
 
 
 def register_exception_handlers(app: FastAPI, settings: Settings) -> None:

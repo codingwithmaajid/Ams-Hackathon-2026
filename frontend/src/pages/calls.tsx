@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { Phone, PhoneCall, Play, AlertCircle } from "lucide-react";
 
 import { callsService } from "@/services/calls";
+import { mapSnapServeStatus } from "@/lib/callStatus";
+import type { LiveCall, LiveCallStatus } from "@/types/calls";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,23 +16,7 @@ import {
 } from "@/components/ui/card";
 import { PageHeader } from "@/components/layout/page-header";
 
-type CallStatus = "queued" | "in-progress" | "completed" | "failed";
-
-interface Call {
-  id: number;
-  contact: string;
-  phone: string;
-  objective: string;
-  status: CallStatus;
-  startedAt: string;
-  duration?: string;
-  summary?: string;
-  sentiment?: "positive" | "neutral" | "negative";
-  backendCallId?: string;
-  error?: string;
-}
-
-const STATUS_BADGE: Record<CallStatus, string> = {
+const STATUS_BADGE: Record<LiveCallStatus, string> = {
   queued: "bg-stone-200 text-stone-700",
   "in-progress": "bg-amber-100 text-amber-800",
   completed: "bg-emerald-100 text-emerald-800",
@@ -38,22 +24,6 @@ const STATUS_BADGE: Record<CallStatus, string> = {
 };
 
 const DEFAULT_AGENT_ID = Number(import.meta.env.VITE_SNAPSERVE_AGENT_ID ?? 825);
-
-const TERMINAL_SNAPSERVE_STATUSES = new Set([
-  "completed",
-  "failed",
-  "no_pickup",
-  "busy",
-  "error",
-  "cancelled",
-]);
-
-function mapSnapServeStatus(snapStatus: string): CallStatus {
-  const normalized = snapStatus.toLowerCase();
-  if (normalized === "completed") return "completed";
-  if (TERMINAL_SNAPSERVE_STATUSES.has(normalized)) return "failed";
-  return "in-progress";
-}
 
 function clock() {
   return new Date().toLocaleTimeString("en-GB", {
@@ -65,7 +35,7 @@ function clock() {
 const MAX_POLL_ATTEMPTS = 30; // ~2 minutes at 4s intervals
 
 export default function CallsPage() {
-  const [calls, setCalls] = useState<Call[]>([]);
+  const [calls, setCalls] = useState<LiveCall[]>([]);
   const [contact, setContact] = useState("");
   const [phone, setPhone] = useState("");
   const [objective, setObjective] = useState("");
@@ -144,7 +114,7 @@ export default function CallsPage() {
     setLoading(true);
     setError(null);
 
-    const newCall: Call = {
+    const newCall: LiveCall = {
       id: Date.now(),
       contact: contact.trim(),
       phone: phone.trim(),
