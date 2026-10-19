@@ -13,3 +13,7 @@ backend.log
 frontend/node_modules
 frontend/dist
 frontend/.vite
+
+# local SQLite case store
+jolly.db
+*.db-journal
