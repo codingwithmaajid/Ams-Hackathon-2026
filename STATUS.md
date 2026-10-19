@@ -14,7 +14,12 @@ Repository inspection:
 - Python project uses `uv`, `pyproject.toml`, and Python 3.12.
 - Project renamed from AIRA to Jolly and retargeted at the Bolna Symphony Buildathon (submission deadline October 31, 2026).
 - Voice layer switched from SnapServe to Bolna (`backend/services/bolna_client.py`).
-- Bolna webhook receiver at `POST /bolna/webhook` and placeholder custom-function tool at `POST /bolna/tools/get-case-brief`.
+- Bolna webhook receiver at `POST /bolna/webhook`.
+- Milestone 2 case store (SQLModel on SQLite, Postgres-ready via `DATABASE_URL`): `Case`, `Document`, `HearingEvent`, `Task`.
+- Three synthetic Indian matters seeded on startup (dates relative to today): C.C. 1042/2025 (Sec 138 NI Act, Egmore), C.S. 2217/2024 (Madras HC specific performance), M.C. 789/2025 (Family Court maintenance).
+- Case APIs: `GET /cases`, `/cases/{id}`, `/timeline`, `/tasks`, `/documents`, `/brief`; `GET /briefs/daily`.
+- Source-grounded case brief and daily morning brief, every line cited to document + paragraph; untrusted document text is never spoken.
+- Live Bolna custom functions: `POST /bolna/tools/get-case-brief` (matches spoken numbers like "ten forty two" or client names) and `POST /bolna/tools/get-daily-brief`.
 
 Implemented application capabilities:
 
@@ -33,7 +38,7 @@ Implemented application capabilities:
 
 ## IN PROGRESS
 
-No implementation milestone is currently in progress.
+- Milestone 3: ingestion, Gemini embeddings (free tier) and cited retrieval for open questions.
 
 ## PLANNED
 
@@ -69,12 +74,6 @@ Technical capabilities:
 
 The following require human confirmation before implementation:
 
-- Exact court/judicial domain for the demo.
-- Whether demo data is synthetic or based on sanitized real documents.
-- Initial LLM provider.
-- Initial embedding provider.
-- Initial vector store.
-- Initial database provider.
 - Authentication approach for hackathon demo.
 - Bolna agent setup in the dashboard (prompt, custom function, webhook URL).
 - Whether UI should remain simple or become a richer review dashboard.
@@ -86,6 +85,10 @@ The following require human confirmation before implementation:
 - The MVP focuses on one flagship workflow: preparing a case for an upcoming hearing.
 - Voice is an interface, not the agent.
 - Bolna is the voice/telephony provider (replaced SnapServe, October 2026).
+- Primary user: advocates at Indian litigation firms; judges/court staff secondary.
+- Demo data is synthetic.
+- LLM + embeddings: Google Gemini free tier (AI Studio key).
+- Database: SQLite via SQLModel now, Postgres later. Vectors: embeddings stored in SQLite, NumPy cosine search.
 - FastAPI remains the application boundary.
 - First agent implementation should be a single LangGraph agent.
 - LLM actions must go through controlled tools.
@@ -97,7 +100,7 @@ The following require human confirmation before implementation:
 
 NEXT:
 
-Milestone 2 - Database and case management.
+Milestone 3 - Ingestion, embeddings and cited retrieval.
 
 P0 - MVP critical:
 
