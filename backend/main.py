@@ -5,6 +5,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from backend.api.bolna import router as bolna_router
 from backend.api.calls import router as calls_router
 from backend.api.health import router as health_router
 from backend.core.config import Settings, get_settings
@@ -43,12 +44,13 @@ def register_routes(app: FastAPI, settings: Settings) -> None:
     async def root() -> dict[str, str]:
         return {
             "name": settings.app_name,
-            "service": "judicial-workflow-agent",
+            "service": "legal-agent",
             "version": settings.app_version,
         }
 
     app.include_router(health_router)
     app.include_router(calls_router)
+    app.include_router(bolna_router)
 
 
 def register_exception_handlers(app: FastAPI, settings: Settings) -> None:
