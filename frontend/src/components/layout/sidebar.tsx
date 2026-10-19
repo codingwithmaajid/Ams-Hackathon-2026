@@ -33,10 +33,10 @@ export function Sidebar() {
           </div>
           <div className="flex flex-col leading-none">
             <span className="font-heading text-base font-semibold tracking-tight">
-              aira
+              jolly
             </span>
             <span className="font-mono text-[10px] text-muted-foreground">
-              agentic rag · v0.4.2
+              legal agent · v0.2.0
             </span>
           </div>
         </div>
@@ -105,7 +105,7 @@ export function MobileHeader() {
         <Command className="size-3.5" />
       </div>
       <span className="font-heading text-base font-semibold tracking-tight">
-        aira
+        jolly
       </span>
       <span className="ml-auto flex items-center gap-1.5 font-mono text-xs text-muted-foreground">
         <span className="size-1.5 animate-pulse rounded-full bg-emerald-500" />
