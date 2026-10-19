@@ -1,5 +1,6 @@
 """Schemas for inbound traffic from Bolna (webhooks and tool calls)."""
 
+import datetime as dt
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict
@@ -32,3 +33,11 @@ class CaseLookupResponse(BaseModel):
     case_id: str
     found: bool
     spoken_summary: str
+    citations: list[dict[str, Any]] = []
+
+
+class DailyBriefRequest(BaseModel):
+    """Arguments for the `get_daily_brief` custom function (all optional)."""
+
+    date: dt.date | None = None
+    advocate: str | None = None
