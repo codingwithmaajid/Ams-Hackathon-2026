@@ -34,7 +34,7 @@ class FakeSession:
         return self.response
 
 
-BASE = Settings(bolna_api_key="test-key", bolna_agent_id="agent-uuid")
+BASE = Settings(bolna_api_key="test-key", bolna_agent_id="agent-uuid", database_url="sqlite://")
 
 
 def make_client(settings: Settings, session: FakeSession, monkeypatch: pytest.MonkeyPatch) -> TestClient:
@@ -120,10 +120,11 @@ def test_webhook_stores_event_and_checks_secret() -> None:
     assert client.get("/bolna/executions/recent").json()[0]["id"] == "exec-1"
 
 
-def test_case_brief_tool_placeholder() -> None:
+def test_case_brief_tool_trims_and_finds_case() -> None:
     client = TestClient(create_app(BASE))
 
     body = client.post("/bolna/tools/get-case-brief", json={"case_id": " 1042 "}).json()
 
     assert body["case_id"] == "1042"
-    assert body["found"] is False
+    assert body["found"] is True
+
