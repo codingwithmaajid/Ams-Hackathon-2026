@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Phone, PhoneCall, Play, AlertCircle } from "lucide-react";
 
 import { callsService } from "@/services/calls";
-import { mapSnapServeStatus } from "@/lib/callStatus";
+import { mapBolnaStatus } from "@/lib/callStatus";
 import type { LiveCall, LiveCallStatus } from "@/types/calls";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,7 +23,9 @@ const STATUS_BADGE: Record<LiveCallStatus, string> = {
   failed: "bg-red-100 text-red-800",
 };
 
-const DEFAULT_AGENT_ID = Number(import.meta.env.VITE_SNAPSERVE_AGENT_ID ?? 825);
+// Optional: when unset, the backend falls back to BOLNA_AGENT_ID.
+const DEFAULT_AGENT_ID: string | undefined =
+  import.meta.env.VITE_BOLNA_AGENT_ID || undefined;
 
 function clock() {
   return new Date().toLocaleTimeString("en-GB", {
@@ -60,7 +62,7 @@ export default function CallsPage() {
               ? {
                   ...row,
                   status: "failed",
-                  error: "Timed out waiting for SnapServe call status.",
+                  error: "Timed out waiting for Bolna call status.",
                 }
               : row
           )
@@ -71,7 +73,7 @@ export default function CallsPage() {
 
       try {
         const statusResponse = await callsService.getStatus(callId);
-        const mapped = mapSnapServeStatus(statusResponse.status);
+        const mapped = mapBolnaStatus(statusResponse.status);
 
         setCalls((prev) =>
           prev.map((row) =>
@@ -82,18 +84,19 @@ export default function CallsPage() {
                   duration: statusResponse.duration_seconds
                     ? `${statusResponse.duration_seconds}s`
                     : row.duration,
-                  summary: statusResponse.transcript ?? row.summary,
+                  summary:
+                    statusResponse.summary ?? statusResponse.transcript ?? row.summary,
                   error:
                     mapped === "failed"
                       ? statusResponse.error_message ??
-                        `SnapServe status: ${statusResponse.status}`
+                        `Bolna status: ${statusResponse.status}`
                       : row.error,
                 }
               : row
           )
         );
 
-        if (mapped === "in-progress") {
+        if (!statusResponse.is_terminal) {
           pollCallStatus(localId, callId, attempt + 1);
         } else {
           pollTimers.current.delete(localId);
@@ -129,12 +132,16 @@ export default function CallsPage() {
     setObjective("");
 
     try {
-      const response = await callsService.placeCall(DEFAULT_AGENT_ID, phone.trim());
+      const response = await callsService.placeCall(
+        phone.trim().replace(/[\s-]/g, ""),
+        DEFAULT_AGENT_ID,
+        { contact_name: newCall.contact, objective: newCall.objective }
+      );
 
       setCalls((prev) =>
         prev.map((c) =>
           c.id === newCall.id
-            ? { ...c, status: "in-progress", backendCallId: response.call_id }
+            ? { ...c, status: "in-progress", backendCallId: response.call_id ?? undefined }
             : c
         )
       );
@@ -169,7 +176,7 @@ export default function CallsPage() {
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-4 p-4 md:gap-6 md:p-6">
         <PageHeader
           title="Calls"
-          description="This is the real call form. Enter a contact and phone number here to place a SnapServe call from the frontend."
+          description="This is the real call form. Enter a contact and phone number here to place a Bolna call from the frontend."
         />
 
         {error && (
@@ -184,7 +191,7 @@ export default function CallsPage() {
             <CardHeader>
               <CardTitle>Start a call</CardTitle>
               <CardDescription>
-                Aira dials via SnapServe, talks using your knowledge base, then logs the recap.
+                Jolly dials via Bolna, talks using your case knowledge, then logs the recap.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -203,7 +210,7 @@ export default function CallsPage() {
                   <input
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+1 555 0142"
+                    placeholder="+91 98765 43210"
                     type="tel"
                     className="h-9 rounded-lg border border-input bg-transparent px-3 font-mono text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30"
                   />
@@ -223,9 +230,9 @@ export default function CallsPage() {
                   {loading ? "Placing call…" : "Place call"}
                 </Button>
                 <div className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">
-                  <p><strong>How this works:</strong> this page sends your input to the backend, and the backend places the real SnapServe call.</p>
+                  <p><strong>How this works:</strong> this page sends your input to the backend, and the backend places the real Bolna call.</p>
                   <p className="mt-1">Use a full phone number like <span className="font-mono">+919876543210</span>. The chat console on the home page is only a local demo and does not place real calls.</p>
-                  <p className="mt-1">Current agent ID: <span className="font-mono">{DEFAULT_AGENT_ID}</span></p>
+                  <p className="mt-1">Current agent ID: <span className="font-mono">{DEFAULT_AGENT_ID ?? "server default"}</span></p>
                 </div>
               </form>
             </CardContent>
@@ -284,12 +291,12 @@ export default function CallsPage() {
                         </p>
                         {c.backendCallId && (
                           <p className="mt-1 text-xs font-mono text-muted-foreground">
-                            SnapServe Call ID: {c.backendCallId}
+                            Bolna execution ID: {c.backendCallId}
                           </p>
                         )}
                         {(c.status === "queued" || c.status === "in-progress") && (
                           <p className="mt-2 animate-pulse font-mono text-xs text-muted-foreground">
-                            ▍agent working — call placed via SnapServe… checking status every few seconds
+                            ▍agent working — call placed via Bolna… checking status every few seconds
                           </p>
                         )}
                         {c.status === "completed" && (
