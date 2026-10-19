@@ -61,3 +61,72 @@ def daily_brief(
     session: Session = Depends(get_session),
 ) -> DailyBrief:
     return build_daily_brief(session, day=day, advocate=advocate)
+
+
+# ---------------------------------------------------------------------------
+# Cited Q&A and document upload (Milestone 3)
+# ---------------------------------------------------------------------------
+
+from pydantic import BaseModel, Field  # noqa: E402
+from fastapi import Request  # noqa: E402
+
+from backend.services.ingest import ingest_document  # noqa: E402
+from backend.services.qa import CaseAnswer, answer_question  # noqa: E402
+from backend.services.retrieval import search  # noqa: E402
+
+
+class AskRequest(BaseModel):
+    question: str = Field(min_length=2, max_length=1000)
+
+
+class DocumentUpload(BaseModel):
+    title: str = Field(min_length=1, max_length=200)
+    kind: str = Field(default="note", pattern="^(order_sheet|pleading|evidence|note|correspondence)$")
+    doc_date: date | None = None
+    text: str = Field(min_length=1, max_length=200_000)
+
+
+class UploadResult(BaseModel):
+    doc_id: str
+    chunks: int
+    flagged_paragraphs: list[str]
+
+
+class SearchHit(BaseModel):
+    doc_id: str
+    doc_title: str
+    para: str | None
+    doc_date: date | None
+    text: str
+    trusted: bool
+    score: float
+
+
+@router.post("/cases/{case_id}/ask", response_model=CaseAnswer)
+def ask_case(case_id: str, body: AskRequest, request: Request, session: Session = Depends(get_session)) -> CaseAnswer:
+    case = _case_or_404(session, case_id)
+    return answer_question(session, case, body.question, embedder=request.app.state.embedder, llm=request.app.state.llm)
+
+
+@router.get("/cases/{case_id}/search", response_model=list[SearchHit])
+def search_case(case_id: str, request: Request, q: str = Query(min_length=2), k: int = Query(default=5, le=20),
+                session: Session = Depends(get_session)) -> list[SearchHit]:
+    case = _case_or_404(session, case_id)
+    hits = search(session, request.app.state.embedder, q, case_id=case.id, k=k)
+    return [SearchHit(doc_id=h.doc_id, doc_title=h.doc_title, para=h.para, doc_date=h.doc_date, text=h.text,
+                      trusted=h.trusted, score=round(h.score, 4)) for h in hits]
+
+
+@router.post("/cases/{case_id}/documents", response_model=UploadResult, status_code=201)
+def upload_document(case_id: str, body: DocumentUpload, request: Request,
+                    session: Session = Depends(get_session)) -> UploadResult:
+    """Add a document to a case. Uploads are always untrusted data."""
+    import uuid
+
+    case = _case_or_404(session, case_id)
+    doc = Document(id=f"{case.id}-UP-{uuid.uuid4().hex[:8]}", case_id=case.id, title=body.title, kind=body.kind,
+                   doc_date=body.doc_date, text=body.text, trusted=False)
+    session.add(doc)
+    session.commit()
+    chunks = ingest_document(session, doc, request.app.state.embedder)
+    return UploadResult(doc_id=doc.id, chunks=len(chunks), flagged_paragraphs=[c.para or "" for c in chunks if c.suspicious])
