@@ -41,3 +41,19 @@ class DailyBriefRequest(BaseModel):
 
     date: dt.date | None = None
     advocate: str | None = None
+
+
+class CaseQuestionRequest(BaseModel):
+    """Arguments for the `ask_case_question` custom function."""
+
+    case_id: str
+    question: str
+
+
+class CaseQuestionResponse(BaseModel):
+    case_id: str
+    found: bool
+    spoken_answer: str
+    answerable: bool = False
+    mode: str = "not_found"
+    citations: list[dict[str, Any]] = []
