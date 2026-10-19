@@ -11,6 +11,7 @@ from sqlalchemy.pool import StaticPool
 from sqlmodel import Session, SQLModel, create_engine
 
 import backend.models.cases  # noqa: F401  (register tables)
+import backend.models.retrieval  # noqa: F401
 
 DEFAULT_DATABASE_URL = "sqlite:///./jolly.db"
 
