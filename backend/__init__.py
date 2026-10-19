@@ -1,1 +1,1 @@
-"""AIRA backend package."""
+"""Jolly backend package."""
