@@ -38,7 +38,17 @@ Implemented application capabilities:
 
 ## IN PROGRESS
 
-- Milestone 3: ingestion, Gemini embeddings (free tier) and cited retrieval for open questions.
+- Milestone 4: post-hearing dictation -> timeline/tasks update + drafted client message with human approval.
+
+## DONE (Milestone 3: cited retrieval, PR #4)
+
+- Paragraph-level ingestion: every chunk is a citable `[Pn]` paragraph (`backend/services/ingest.py`).
+- Embeddings: Gemini `gemini-embedding-2` when `EMBEDDING_API_KEY`/`LLM_API_KEY` is set; deterministic offline hashing embedder otherwise, so demos and CI never need a key.
+- Vectors stored in SQLite (`chunk` table), NumPy cosine + lexical boost, neighbour-paragraph expansion for order sheets.
+- Guarded Q&A (`backend/services/qa.py`): outcome-prediction refusal, prompt-injection screening at ingestion, untrusted (opposing party / uploaded) text attributed rather than stated as fact.
+- Gemini `gemini-3.8-flash` rephrases retrieved passages only; JSON output, citations must be a subset of the passages it was shown, otherwise Jolly falls back to quoting the record.
+- APIs: `POST /cases/{id}/ask`, `GET /cases/{id}/search`, `POST /cases/{id}/documents` (always untrusted), Bolna `POST /bolna/tools/ask-case-question`.
+- 36 tests pass.
 
 ## PLANNED
 
@@ -100,7 +110,7 @@ The following require human confirmation before implementation:
 
 NEXT:
 
-Milestone 3 - Ingestion, embeddings and cited retrieval.
+Milestone 4 - Post-hearing dictation, approvals and client update drafts.
 
 P0 - MVP critical:
 
