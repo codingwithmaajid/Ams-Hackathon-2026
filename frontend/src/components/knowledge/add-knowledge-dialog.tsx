@@ -140,7 +140,7 @@ export function AddKnowledgeDialog({
         <DialogHeader>
           <DialogTitle>Add knowledge</DialogTitle>
           <DialogDescription>
-            Feed Aira whole data. Everything added here is chunked, embedded,
+            Feed Jolly whole data. Everything added here is chunked, embedded,
             and used to answer — usually within seconds.
           </DialogDescription>
         </DialogHeader>
