@@ -7,8 +7,10 @@ from fastapi.responses import JSONResponse
 
 from backend.api.bolna import router as bolna_router
 from backend.api.calls import router as calls_router
+from backend.api.cases import router as cases_router
 from backend.api.health import router as health_router
 from backend.core.config import Settings, get_settings
+from backend.core.db import init_db, make_engine
 from backend.core.logging import configure_logging
 
 load_dotenv()
@@ -24,6 +26,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
 
     app.state.settings = settings
+    app.state.engine = make_engine(settings.database_url)
+    init_db(app.state.engine)
+    if settings.seed_demo_data:
+        from sqlmodel import Session
+
+        from backend.data.seed import seed
+
+        with Session(app.state.engine) as session:
+            seed(session)
 
     app.add_middleware(
         CORSMiddleware,
@@ -51,6 +62,7 @@ def register_routes(app: FastAPI, settings: Settings) -> None:
     app.include_router(health_router)
     app.include_router(calls_router)
     app.include_router(bolna_router)
+    app.include_router(cases_router)
 
 
 def register_exception_handlers(app: FastAPI, settings: Settings) -> None:

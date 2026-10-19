@@ -3,21 +3,27 @@
 - POST /bolna/webhook               execution updates (set as the agent's webhook_url)
 - POST /bolna/tools/get-case-brief  custom function the voice agent calls mid-call
 
-Scaffolding only: the case tool returns a placeholder until the case
-store and brief generator land. Bolna is the voice layer; the legal
-reasoning stays in Jolly's own agent behind these endpoints.
+- POST /bolna/tools/get-daily-brief custom function for the morning brief call
+
+Case answers come from the case store and are source-grounded. Bolna is
+the voice layer; the legal reasoning stays in Jolly behind these endpoints.
 """
 
 import hmac
 import logging
 
-from fastapi import APIRouter, Header, HTTPException, Query, Request, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, status
+from sqlmodel import Session
+
+from backend.core.db import get_session
 
 from backend.models.bolna import (
     BolnaExecutionEvent,
     CaseLookupRequest,
     CaseLookupResponse,
+    DailyBriefRequest,
 )
+from backend.services.cases import DailyBrief, build_case_brief, build_daily_brief, find_case
 
 logger = logging.getLogger(__name__)
 
@@ -60,21 +66,42 @@ async def recent_executions() -> list[dict]:
 
 
 @router.post("/tools/get-case-brief", response_model=CaseLookupResponse)
-async def get_case_brief(
+def get_case_brief(
     body: CaseLookupRequest,
     request: Request,
     x_jolly_secret: str | None = Header(default=None),
     secret: str | None = Query(default=None),
+    session: Session = Depends(get_session),
 ) -> CaseLookupResponse:
     _check_secret(request, x_jolly_secret, secret)
-    case_id = body.case_id.strip()
-
-    # TODO(milestone-3): look up the case and return the source-grounded brief.
+    query = body.case_id.strip()
+    case = find_case(session, query)
+    if case is None:
+        return CaseLookupResponse(
+            case_id=query,
+            found=False,
+            spoken_summary=(
+                f"I couldn't find a case matching {query}. "
+                "Could you give me the case number or the client's name?"
+            ),
+        )
+    brief = build_case_brief(session, case)
     return CaseLookupResponse(
-        case_id=case_id,
-        found=False,
-        spoken_summary=(
-            f"I don't have case {case_id} loaded yet. "
-            "Case briefs are coming in the next build."
-        ),
+        case_id=case.id,
+        found=True,
+        spoken_summary=brief.spoken_summary,
+        citations=[line.citation.model_dump(mode="json") for line in brief.lines if line.citation],
     )
+
+
+@router.post("/tools/get-daily-brief", response_model=DailyBrief)
+def get_daily_brief(
+    request: Request,
+    body: DailyBriefRequest | None = None,
+    x_jolly_secret: str | None = Header(default=None),
+    secret: str | None = Query(default=None),
+    session: Session = Depends(get_session),
+) -> DailyBrief:
+    _check_secret(request, x_jolly_secret, secret)
+    body = body or DailyBriefRequest()
+    return build_daily_brief(session, day=body.date, advocate=body.advocate)

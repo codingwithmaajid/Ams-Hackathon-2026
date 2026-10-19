@@ -41,6 +41,8 @@ class Settings:
     # Shared secret Bolna sends back to us (query param or header) on
     # webhooks and custom-function tool calls. Optional for local dev.
     bolna_webhook_secret: Optional[str] = None
+    # Load the synthetic demo matters into an empty database on startup.
+    seed_demo_data: bool = True
 
 
 def get_settings() -> Settings:
@@ -64,4 +66,5 @@ def get_settings() -> Settings:
         bolna_agent_id=_get_optional_env("BOLNA_AGENT_ID"),
         bolna_from_number=_get_optional_env("BOLNA_FROM_NUMBER"),
         bolna_webhook_secret=_get_optional_env("BOLNA_WEBHOOK_SECRET"),
+        seed_demo_data=_get_env("SEED_DEMO_DATA", "true").lower() in ("1", "true", "yes"),
     )
