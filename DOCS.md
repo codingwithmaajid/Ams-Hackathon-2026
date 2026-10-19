@@ -1,4 +1,4 @@
-# AIRA Technical Documentation
+# Jolly Technical Documentation
 
 ## Repository State
 
@@ -11,14 +11,14 @@ Current implementation inspected:
 - Docker: `python:3.12-slim`, installs `uv`, runs `uvicorn backend.main:app`.
 - Existing API: `GET /` returns service metadata.
 - Existing API: `GET /health` returns lightweight service health.
-- Existing API: `POST /call` starts a SnapServe outbound call.
-- Existing voice provider: SnapServe outbound call API.
+- Existing API: `POST /call` starts a Bolna outbound call.
+- Existing voice provider: Bolna outbound call API.
 - Existing AI integrations: none.
 - Existing RAG implementation: none.
 - Existing database: none.
-- Existing environment variables: `APP_ENV`, `APP_NAME`, `APP_VERSION`, `LOG_LEVEL`, `CORS_ORIGINS`, `SNAPSERVE_API_KEY`, `SNAPSERVE_BASE_URL`, and `SNAPSERVE_FROM_NUMBER`.
+- Existing environment variables: `APP_ENV`, `APP_NAME`, `APP_VERSION`, `LOG_LEVEL`, `CORS_ORIGINS`, `BOLNA_API_KEY`, `BOLNA_BASE_URL`, `BOLNA_AGENT_ID`, `BOLNA_FROM_NUMBER`, and `BOLNA_WEBHOOK_SECRET`.
 - Existing deployment target: Render (see `render.yaml` and deployment steps below), based on project context.
-- Real SnapServe outbound calling is implemented via `backend/services/snapserve_client.py`, using the `/calls/outbound` endpoint (not the plain `/calls` endpoint, which only logs a record and never dials).
+- Real Bolna outbound calling is implemented via `backend/services/bolna_client.py`, using Bolna's `POST /call` (returns an `execution_id`) and `GET /executions/{execution_id}`. `call-disconnected` is not terminal; wait for `completed` before reading transcript, summary, or recording.
 
 ## Milestone 1 Backend Foundation
 
@@ -41,7 +41,7 @@ backend/
         calls.py           # Pydantic request/response schemas
     services/
         __init__.py
-        snapserve_client.py # SnapServe HTTP integration (service layer)
+        bolna_client.py # Bolna HTTP integration (service layer)
 
 tests/
     test_health.py
@@ -52,8 +52,10 @@ Current endpoints:
 ```text
 GET  /
 GET  /health
-POST /call            # places a real outbound SnapServe call
-GET  /call/{call_id}  # polls real SnapServe call status
+POST /call            # places a real outbound Bolna call
+GET  /call/{call_id}  # polls real Bolna execution status
+POST /bolna/webhook   # Bolna posts execution updates here
+POST /bolna/tools/get-case-brief  # custom function the voice agent calls mid-call (placeholder)
 ```
 
 `/api/v1/` is reserved as the prefix for future APIs. No case, document, RAG, agent, hearing, approval, notification, or scheduling APIs exist yet.
@@ -61,7 +63,7 @@ GET  /call/{call_id}  # polls real SnapServe call status
 Configuration:
 
 - `APP_ENV`, default `local`.
-- `APP_NAME`, default `AIRA`.
+- `APP_NAME`, default `Jolly`.
 - `APP_VERSION`, default `0.1.0`.
 - `LOG_LEVEL`, default `INFO`.
 - `CORS_ORIGINS`, default `http://localhost:5173`.
@@ -83,7 +85,7 @@ Planned target architecture:
 
 ```mermaid
 flowchart TD
-    U["Judge / Authorized Staff"] --> V["Voice Interface - SnapServe"]
+    U["Judge / Authorized Staff"] --> V["Voice Interface - Bolna"]
     V --> A["FastAPI Application Layer"]
     A --> G["LangGraph Judicial Workflow Agent"]
     G --> C["Case Tools"]
@@ -116,7 +118,7 @@ flowchart TD
 
 Voice layer:
 
-- SnapServe handles telephony, speech-to-text, and text-to-speech where supported.
+- Bolna handles telephony, speech-to-text, and text-to-speech where supported.
 - It should pass transcript or intent data to FastAPI.
 - It must not contain judicial logic.
 
@@ -170,11 +172,11 @@ sequenceDiagram
 ## Voice Lifecycle
 
 1. User speaks through a phone call.
-2. SnapServe captures speech and produces text/transcript.
+2. Bolna captures speech and produces text/transcript.
 3. FastAPI receives the request.
 4. The agent prepares a response.
 5. FastAPI returns structured response text.
-6. SnapServe speaks the response.
+6. Bolna speaks the response.
 7. User can ask follow-up questions or request approved workflow actions.
 
 ## Agent Lifecycle
@@ -378,7 +380,7 @@ Current:
 Render
   -> Docker container
   -> FastAPI app
-  -> SnapServe outbound call API
+  -> Bolna outbound call API
 ```
 
 Planned:
@@ -406,7 +408,7 @@ uv run uvicorn server:app --reload
 Required current environment variable:
 
 ```text
-SNAPSERVE_API_KEY
+BOLNA_API_KEY
 ```
 
 Future local development should use fixture case data before connecting to real court data.
