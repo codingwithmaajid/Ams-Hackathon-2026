@@ -82,7 +82,7 @@ export default function KnowledgePage() {
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-4 p-4 md:gap-6 md:p-6">
         <PageHeader
           title="Knowledge"
-          description="Feed Aira whole data — files, docs, Q&As, websites — and it trains on everything you add."
+          description="Feed Jolly whole data — files, docs, Q&As, websites — and it trains on everything you add."
           action={
             <Button onClick={() => setAddOpen(true)}>
               <Plus className="size-4" />
@@ -120,7 +120,7 @@ export default function KnowledgePage() {
           <CardHeader>
             <CardTitle>Knowledge sources</CardTitle>
             <CardDescription>
-              Everything Aira retrieves from when answering. Toggle a source to
+              Everything Jolly retrieves from when answering. Toggle a source to
               include or exclude it.
             </CardDescription>
             <CardAction>
@@ -157,7 +157,7 @@ export default function KnowledgePage() {
                   <>
                     <p className="text-sm font-medium">No knowledge yet</p>
                     <p className="max-w-xs text-xs text-muted-foreground">
-                      Upload files, paste documents, or add Q&A pairs — Aira
+                      Upload files, paste documents, or add Q&A pairs — Jolly
                       trains on all of it within seconds.
                     </p>
                     <Button size="sm" onClick={() => setAddOpen(true)}>
@@ -300,7 +300,7 @@ function GuidelinesCard() {
       <CardHeader>
         <CardTitle>Agent guidelines</CardTitle>
         <CardDescription>
-          Who Aira is and how it should talk — applied on top of trained data.
+          Who Jolly is and how it should talk — applied on top of trained data.
         </CardDescription>
         <CardAction>
           {saved ? (
