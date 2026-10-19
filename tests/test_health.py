@@ -11,9 +11,9 @@ def test_root_returns_service_metadata() -> None:
 
     assert response.status_code == 200
     assert response.json() == {
-        "name": "AIRA",
-        "service": "judicial-workflow-agent",
-        "version": "0.1.0",
+        "name": "Jolly",
+        "service": "legal-agent",
+        "version": "0.2.0",
     }
 
 
@@ -23,20 +23,17 @@ def test_health_returns_ok() -> None:
     assert response.status_code == 200
     assert response.json() == {
         "status": "ok",
-        "service": "aira-backend",
+        "service": "jolly-backend",
     }
 
 
 def test_malformed_call_request_returns_consistent_error() -> None:
     response = client.post(
         "/call",
-        json={
-            "agent_id": 0,
-            "phone_number": "",
-        },
+        json={"phone_number": ""},
     )
 
     assert response.status_code == 400
     body = response.json()
     assert body["error"]["code"] == "HTTP_ERROR"
-    assert body["error"]["message"] == "A valid phone number is required."
+    assert "E.164" in body["error"]["message"]
