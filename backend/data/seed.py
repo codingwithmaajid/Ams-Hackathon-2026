@@ -11,6 +11,7 @@ from datetime import date, timedelta
 from sqlmodel import Session, SQLModel, select
 
 from backend.models.cases import Case, Document, HearingEvent, Task
+from backend.models.retrieval import Chunk
 
 FIRM_ADVOCATE = "Adv. Priya Raman"
 
@@ -228,7 +229,7 @@ def seed(session: Session, today: date | None = None, reset: bool = False) -> bo
     """Insert demo matters. Returns True if rows were written."""
     today = today or date.today()
     if reset:
-        for model in (Task, HearingEvent, Document, Case):
+        for model in (Chunk, Task, HearingEvent, Document, Case):
             for row in session.exec(select(model)).all():
                 session.delete(row)
         session.commit()

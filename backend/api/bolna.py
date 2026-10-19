@@ -4,6 +4,7 @@
 - POST /bolna/tools/get-case-brief  custom function the voice agent calls mid-call
 
 - POST /bolna/tools/get-daily-brief custom function for the morning brief call
+- POST /bolna/tools/ask-case-question  cited answer to a free-form question about one case
 
 Case answers come from the case store and are source-grounded. Bolna is
 the voice layer; the legal reasoning stays in Jolly behind these endpoints.
@@ -21,8 +22,11 @@ from backend.models.bolna import (
     BolnaExecutionEvent,
     CaseLookupRequest,
     CaseLookupResponse,
+    CaseQuestionRequest,
+    CaseQuestionResponse,
     DailyBriefRequest,
 )
+from backend.services.qa import answer_question
 from backend.services.cases import DailyBrief, build_case_brief, build_daily_brief, find_case
 
 logger = logging.getLogger(__name__)
@@ -105,3 +109,30 @@ def get_daily_brief(
     _check_secret(request, x_jolly_secret, secret)
     body = body or DailyBriefRequest()
     return build_daily_brief(session, day=body.date, advocate=body.advocate)
+
+
+@router.post("/tools/ask-case-question", response_model=CaseQuestionResponse)
+def ask_case_question(
+    body: CaseQuestionRequest,
+    request: Request,
+    x_jolly_secret: str | None = Header(default=None),
+    secret: str | None = Query(default=None),
+    session: Session = Depends(get_session),
+) -> CaseQuestionResponse:
+    _check_secret(request, x_jolly_secret, secret)
+    case = find_case(session, body.case_id)
+    if case is None:
+        return CaseQuestionResponse(
+            case_id=body.case_id, found=False,
+            spoken_answer=f"I couldn't find a case matching {body.case_id}. Which case do you mean?",
+        )
+    ans = answer_question(session, case, body.question, embedder=request.app.state.embedder, llm=request.app.state.llm)
+    spoken = ans.answer
+    if ans.citations:
+        c = ans.citations[0]
+        when = c.doc_date.strftime("%-d %B") if c.doc_date else ""
+        spoken += f" That's from the {c.doc_title.lower()}{' of ' + when if when else ''}."
+    return CaseQuestionResponse(
+        case_id=case.id, found=True, spoken_answer=spoken, answerable=ans.answerable, mode=ans.mode,
+        citations=[c.model_dump(mode="json") for c in ans.citations],
+    )

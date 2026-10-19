@@ -36,6 +36,27 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         with Session(app.state.engine) as session:
             seed(session)
 
+    from sqlmodel import Session as _Session
+
+    from backend.services.embeddings import get_embedder
+    from backend.services.ingest import ensure_index
+    from backend.services.llm import get_llm
+
+    app.state.embedder = get_embedder(settings)
+    app.state.llm = get_llm(settings)
+    try:
+        with _Session(app.state.engine) as session:
+            ensure_index(session, app.state.embedder)
+    except Exception as exc:  # e.g. Gemini quota: fall back to the offline embedder
+        import logging
+
+        logging.getLogger(__name__).warning("Embedding index failed (%s); using offline embedder.", exc)
+        from backend.services.embeddings import HashingEmbedder
+
+        app.state.embedder = HashingEmbedder()
+        with _Session(app.state.engine) as session:
+            ensure_index(session, app.state.embedder)
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=list(settings.cors_origins),
