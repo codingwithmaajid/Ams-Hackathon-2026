@@ -1,6 +1,6 @@
-# AIRA Project Status
+# Jolly Project Status
 
-Last updated: August 23, 2026
+Last updated: October 19, 2026
 
 ## DONE
 
@@ -8,18 +8,20 @@ Repository inspection:
 
 - FastAPI backend exists in `server.py`.
 - Inline browser form exists at `GET /`.
-- SnapServe outbound call endpoint exists at `POST /call`.
-- SnapServe API key is read from `SNAPSERVE_API_KEY`.
+- Bolna outbound call endpoint exists at `POST /call`.
+- Bolna API key is read from `BOLNA_API_KEY`.
 - Dockerfile exists for Render-style deployment.
 - Python project uses `uv`, `pyproject.toml`, and Python 3.12.
-- Project planning has shifted from a generic voice agent to AIRA, an AI Judicial Workflow Assistant.
+- Project renamed from AIRA to Jolly and retargeted at the Bolna Symphony Buildathon (submission deadline October 31, 2026).
+- Voice layer switched from SnapServe to Bolna (`backend/services/bolna_client.py`).
+- Bolna webhook receiver at `POST /bolna/webhook` and placeholder custom-function tool at `POST /bolna/tools/get-case-brief`.
 
 Implemented application capabilities:
 
-- Start an outbound SnapServe call by passing an agent ID and phone number.
-- Keep the SnapServe key server-side.
+- Start an outbound Bolna call by passing an agent ID and phone number.
+- Keep the Bolna key server-side.
 - Basic request validation for the current call launcher.
-- Basic HTTP error handling for SnapServe failures.
+- Basic HTTP error handling for Bolna failures.
 - Milestone 1 backend foundation.
 - `GET /` service metadata endpoint.
 - `GET /health` lightweight health endpoint.
@@ -74,7 +76,7 @@ The following require human confirmation before implementation:
 - Initial vector store.
 - Initial database provider.
 - Authentication approach for hackathon demo.
-- SnapServe inbound/agent webhook capabilities and expected payload shape.
+- Bolna agent setup in the dashboard (prompt, custom function, webhook URL).
 - Whether UI should remain simple or become a richer review dashboard.
 
 ## DECISIONS
@@ -83,7 +85,7 @@ The following require human confirmation before implementation:
 - AI automates workflow, not judicial judgment.
 - The MVP focuses on one flagship workflow: preparing a case for an upcoming hearing.
 - Voice is an interface, not the agent.
-- SnapServe remains the current voice/telephony provider.
+- Bolna is the voice/telephony provider (replaced SnapServe, October 2026).
 - FastAPI remains the application boundary.
 - First agent implementation should be a single LangGraph agent.
 - LLM actions must go through controlled tools.
@@ -112,7 +114,7 @@ P1 - Important:
 3. Define tool contracts before implementing tools.
 4. Define pre-hearing brief schema.
 5. Define approval policy matrix.
-6. Confirm SnapServe inbound conversation integration path.
+6. Wire the Bolna `get_case_brief` custom function to the real brief generator.
 
 P2 - Future:
 
@@ -132,7 +134,7 @@ The existing code is only a voice-call integration prototype:
 ```text
 Frontend or API client
   -> FastAPI backend
-  -> SnapServe outbound call API
+  -> Bolna outbound call API
   -> Phone call
 ```
 
@@ -153,7 +155,7 @@ Target planned architecture:
 
 ```text
 Judge / Authorized Staff
-  -> SnapServe voice interface
+  -> Bolna voice interface
   -> FastAPI
   -> LangGraph judicial workflow agent
   -> RAG + tools + approval workflows

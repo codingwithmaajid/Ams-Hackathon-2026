@@ -1,4 +1,4 @@
-# AIRA Technical Stack Plan
+# Jolly Technical Stack Plan
 
 This document describes selected and candidate technologies for the hackathon MVP. It reflects the current repository and avoids adding technology until it is needed.
 
@@ -11,7 +11,7 @@ This document describes selected and candidate technologies for the hackathon MV
 | Package manager | `uv` |
 | Python | `>=3.12` |
 | HTTP client | `requests` |
-| Voice provider | SnapServe outbound call API |
+| Voice provider | Bolna outbound call API |
 | Docker | `python:3.12-slim` image with `uv` |
 | Deployment | Render, based on project context |
 | AI | Not implemented |
@@ -47,7 +47,7 @@ Recommendation: keep the current UI minimal until backend contracts are clear. I
 
 Voice UI:
 
-- SnapServe remains the phone interface.
+- Bolna remains the phone interface.
 - The visual UI should support review, citations, approvals, and workflow state.
 
 Deployment:
@@ -82,7 +82,7 @@ Python version:
 
 API architecture:
 
-- Current: `POST /call` for outbound SnapServe calls.
+- Current: `POST /call` for outbound Bolna calls.
 - Current: `GET /` for backend service metadata.
 - Current: `GET /health` for lightweight health checks.
 - Planned: protected agent/conversation endpoints after contracts are defined.
@@ -162,11 +162,11 @@ Tradeoffs:
 
 ### Speech-to-Text and Text-to-Speech
 
-Current: SnapServe is the voice/telephony provider.
+Current: Bolna is the voice/telephony provider.
 
 Why:
 
-- Existing SnapServe access and outbound calling work.
+- Bolna is the Symphony Buildathon host, runs Indian telephony (Plivo/Exotel) and Indic STT/TTS, and supports webhooks plus custom function calls into our API.
 - Fits hackathon voice-first requirement.
 
 Alternatives:
@@ -176,8 +176,8 @@ Alternatives:
 
 Tradeoffs:
 
-- SnapServe should remain for the MVP unless its inbound agent integration is insufficient.
-- LiveKit should not replace SnapServe without a specific reason.
+- Bolna handles the conversation; Jolly's own backend owns case data and reasoning, exposed to the agent as custom functions.
+- LiveKit should not replace Bolna without a specific reason.
 
 ## RAG
 
@@ -309,7 +309,7 @@ Authorization:
 
 Secrets:
 
-- Current: `SNAPSERVE_API_KEY` from environment.
+- Current: `BOLNA_API_KEY` from environment.
 - Planned: all LLM, database, storage, and provider secrets through environment variables or platform secret management.
 
 Security tradeoffs:
@@ -320,7 +320,7 @@ Security tradeoffs:
 ## Recommended MVP Stack
 
 - FastAPI backend.
-- Existing SnapServe voice layer.
+- Existing Bolna voice layer.
 - Single LangGraph workflow.
 - Hosted LLM provider selected by availability and data policy.
 - Simple embeddings provider.

@@ -62,7 +62,7 @@ function answerFromKnowledge(
 }
 
 const GREETING =
-  "Hi, I'm Aira — your demo console. I can answer from the local knowledge base here, but I do not place real SnapServe calls from this chat.\nFor real calling, open the Calls page. Try: help · sources · status";
+  "Hi, I'm Jolly — your demo console. I can answer from the local knowledge base here, but I do not place real Bolna calls from this chat.\nFor real calling, open the Calls page. Try: help · sources · status";
 
 const SUGGESTIONS = ["help", "call john", "email sara@lumenworks.io", "status"] as const;
 
@@ -165,7 +165,7 @@ export function AgentConsole() {
           "+1 555 01xx",
           `Follow-up requested via console at ${clock()}`
         );
-        replyText = `This console only simulates a call for ${contact}. For a real SnapServe phone call, open the Calls page and enter the actual phone number there.`;
+        replyText = `This console only simulates a call for ${contact}. For a real Bolna phone call, open the Calls page and enter the actual phone number there.`;
         break;
       }
       case "email": {
@@ -176,7 +176,7 @@ export function AgentConsole() {
         queueEmail(
           arg,
           "Quick follow-up from Maya",
-          `Hi,\n\nFollowing up with a short note grounded in our latest materials. Let me know a good time to connect.\n\nBest,\nAira (on behalf of Maya)`
+          `Hi,\n\nFollowing up with a short note grounded in our latest materials. Let me know a good time to connect.\n\nBest,\nJolly (on behalf of Maya)`
         );
         replyText = `Drafted an email to ${arg} grounded in your context — sending now. It'll be logged on the Reports page.`;
         break;
@@ -269,8 +269,8 @@ export function AgentConsole() {
             onKeyDown={onKeyDown}
             autoFocus
             spellCheck={false}
-            aria-label="Message Aira"
-            placeholder={busy ? "Aira is typing…" : "Message Aira…"}
+            aria-label="Message Jolly"
+            placeholder={busy ? "Jolly is typing…" : "Message Jolly…"}
             className="max-h-40 flex-1 resize-none bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground"
           />
           <button
@@ -283,7 +283,7 @@ export function AgentConsole() {
           </button>
         </form>
         <p className="mt-2 text-center text-xs text-muted-foreground">
-          aira can make mistakes. enter to send · shift+enter for a new line.
+          jolly can make mistakes. enter to send · shift+enter for a new line.
         </p>
       </div>
     </div>

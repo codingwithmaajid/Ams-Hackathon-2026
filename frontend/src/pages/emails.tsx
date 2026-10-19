@@ -39,7 +39,7 @@ export default function EmailsPage() {
     setBody(
       (b) =>
         b ||
-        `Hi ${name.charAt(0).toUpperCase() + name.slice(1)},\n\nFollowing up with a short note grounded in our latest materials. Let me know a good time to connect.\n\nBest,\nAira (on behalf of Maya)`
+        `Hi ${name.charAt(0).toUpperCase() + name.slice(1)},\n\nFollowing up with a short note grounded in our latest materials. Let me know a good time to connect.\n\nBest,\nJolly (on behalf of Maya)`
     );
   };
 
@@ -50,7 +50,7 @@ export default function EmailsPage() {
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-4 p-4 md:gap-6 md:p-6">
         <PageHeader
           title="Emails"
-          description="Let Aira draft from your knowledge base, review, then send. Every send is logged."
+          description="Let Jolly draft from your knowledge base, review, then send. Every send is logged."
         />
 
         <div className="grid gap-4 md:gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">

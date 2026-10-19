@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: aira-backend
+    name: jolly-backend
     runtime: docker
     dockerfilePath: ./Dockerfile
     dockerContext: .
@@ -10,30 +10,34 @@ services:
       - key: APP_ENV
         value: production
       - key: APP_NAME
-        value: AIRA
+        value: Jolly
       - key: APP_VERSION
-        value: 0.1.0
+        value: 0.2.0
       - key: LOG_LEVEL
         value: INFO
       - key: CORS_ORIGINS
         sync: false
-      - key: SNAPSERVE_API_KEY
+      - key: BOLNA_API_KEY
         sync: false
-      - key: SNAPSERVE_BASE_URL
-        value: https://app.snapserve.ai/api
-      - key: SNAPSERVE_FROM_NUMBER
+      - key: BOLNA_BASE_URL
+        value: https://api.bolna.ai
+      - key: BOLNA_AGENT_ID
+        sync: false
+      - key: BOLNA_FROM_NUMBER
+        sync: false
+      - key: BOLNA_WEBHOOK_SECRET
         sync: false
 
   - type: web
-    name: aira-frontend
+    name: jolly-frontend
     runtime: static
     buildCommand: cd frontend && npm ci && npm run build
     staticPublishPath: frontend/dist
     envVars:
       - key: VITE_API_URL
         sync: false
-      - key: VITE_SNAPSERVE_AGENT_ID
-        value: "825"
+      - key: VITE_BOLNA_AGENT_ID
+        sync: false
     routes:
       - type: rewrite
         source: /*

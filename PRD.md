@@ -1,8 +1,8 @@
-# Product Requirements Document - AIRA
+# Product Requirements Document - Jolly
 
 ## 1. Product Overview
 
-AIRA is an AI-powered Judicial Workflow Assistant for the AMS Hackathon 2026. It is a voice-first, tool-driven assistant that prepares, coordinates, executes, and tracks administrative work around judicial proceedings while preserving human judicial authority.
+Jolly is an AI-powered Judicial Workflow Assistant for the Bolna Symphony Buildathon 2026 (formerly AIRA, AMS Hackathon 2026). It is a voice-first, tool-driven assistant that prepares, coordinates, executes, and tracks administrative work around judicial proceedings while preserving human judicial authority.
 
 Core principle:
 
@@ -58,7 +58,7 @@ Court administrator:
 
 ## 6. Non-Goals
 
-AIRA will not:
+Jolly will not:
 
 - Decide guilt, innocence, liability, sentence, verdict, or legal outcome.
 - Recommend who should win or lose.
@@ -103,7 +103,7 @@ User request: "Prepare Case 1042 for tomorrow."
 
 ### Post-Decision Workflow
 
-After a human decision, AIRA may:
+After a human decision, Jolly may:
 
 - Record the proceeding for review.
 - Prepare draft administrative documents.
@@ -174,9 +174,9 @@ After a human decision, AIRA may:
 ## 14. Voice Requirements
 
 - Voice is a first-class interface for the hackathon.
-- SnapServe remains the current voice/telephony layer.
+- Bolna is the voice/telephony layer (replaced SnapServe in October 2026).
 - Voice should pass user intent/transcript to the application layer.
-- The agent should remain independent of SnapServe-specific business logic.
+- The agent should remain independent of Bolna-specific business logic.
 - Voice responses should be concise and allow drill-down.
 
 ## 15. Human Approval Requirements

@@ -1,6 +1,6 @@
-# AIRA - AI Judicial Workflow Assistant
+# Jolly - Voice-First Legal Agent
 
-AIRA is a planned voice-first judicial workflow assistant for the AMS Hackathon 2026.
+Jolly (formerly AIRA) is a voice-first legal agent for Indian law firms and courts, built for the Bolna Symphony Buildathon 2026.
 
 Tagline: Human decides. AI prepares, coordinates, executes, and tracks.
 
@@ -10,9 +10,9 @@ Courts and judicial staff handle large volumes of case documents, filings, heari
 
 ## Solution
 
-AIRA is designed to help authorized judicial users prepare for hearings and manage case workflow. The system should retrieve authorized case material, classify documents, build timelines, identify missing items, prepare source-grounded briefs, and coordinate approved administrative follow-up.
+Jolly is designed to help authorized judicial users prepare for hearings and manage case workflow. The system should retrieve authorized case material, classify documents, build timelines, identify missing items, prepare source-grounded briefs, and coordinate approved administrative follow-up.
 
-AIRA must not replace judges. It must not determine guilt, liability, sentence, verdict, case outcome, or whether a party should win or lose.
+Jolly must not replace judges. It must not determine guilt, liability, sentence, verdict, case outcome, or whether a party should win or lose.
 
 ## Current Status
 
@@ -20,10 +20,11 @@ Implemented:
 
 - FastAPI backend.
 - React/Vite frontend scaffold.
-- SnapServe outbound call integration.
+- Bolna outbound call integration (`POST /call`, `GET /call/{id}`).
+- Bolna webhook receiver (`POST /bolna/webhook`) and custom-function tool scaffold (`POST /bolna/tools/get-case-brief`).
 - Backend service metadata and health endpoints.
 - Docker-based deployment setup.
-- Environment-variable based SnapServe secret handling.
+- Environment-variable based Bolna secret handling.
 
 Planned:
 
@@ -53,7 +54,7 @@ The hackathon MVP centers on one workflow:
 ```text
 Judge: "Prepare Case 1042 for tomorrow."
 
-AIRA:
+Jolly:
 1. Identifies the case.
 2. Retrieves authorized documents.
 3. Searches the case knowledge base.
@@ -73,7 +74,7 @@ AIRA:
 Judge / Authorized Staff
         |
         v
-Voice Interface - SnapServe
+Voice Interface - Bolna
         |
         v
 FastAPI Application
@@ -99,7 +100,7 @@ Voice is an interface to the agent. It is not the intelligence layer.
 
 ## Human In The Loop
 
-AIRA uses bounded autonomy:
+Jolly uses bounded autonomy:
 
 - Level 0: AI provides information only.
 - Level 1: AI recommends workflow actions.
@@ -128,9 +129,9 @@ Planned tool groups:
 
 ## Security Philosophy
 
-AIRA will handle sensitive legal information, so the planned architecture requires authentication, authorization, role-based access control, case-level isolation, audit logging, secret management, encryption, document provenance, and prompt-injection protections.
+Jolly will handle sensitive legal information, so the planned architecture requires authentication, authorization, role-based access control, case-level isolation, audit logging, secret management, encryption, document provenance, and prompt-injection protections.
 
-Secrets such as `SNAPSERVE_API_KEY`, LLM keys, database URLs, and Supabase credentials must never be committed to Git or exposed to frontend JavaScript.
+Secrets such as `BOLNA_API_KEY`, LLM keys, database URLs, and Supabase credentials must never be committed to Git or exposed to frontend JavaScript.
 
 ## Roadmap
 
@@ -167,11 +168,16 @@ uv sync
 uv run uvicorn server:app --reload
 ```
 
-Required environment variable for the current SnapServe call launcher:
+Environment variables for the Bolna voice layer (see `.env.example`):
 
 ```text
-SNAPSERVE_API_KEY
+BOLNA_API_KEY         # from platform.bolna.ai
+BOLNA_AGENT_ID        # UUID of the Jolly agent in Bolna
+BOLNA_FROM_NUMBER     # optional, E.164 number bought in Bolna
+BOLNA_WEBHOOK_SECRET  # optional, appended as ?secret=... to webhook/tool URLs
 ```
+
+In the Bolna dashboard, set the agent's webhook URL to `https://<backend>/bolna/webhook?secret=<BOLNA_WEBHOOK_SECRET>` and add a custom function `get_case_brief(case_id)` pointing at `https://<backend>/bolna/tools/get-case-brief?secret=<BOLNA_WEBHOOK_SECRET>`.
 
 ## Deployment
 
@@ -185,7 +191,7 @@ The current implementation is a voice-call integration prototype, not a complete
 
 ## Responsible AI Statement
 
-AIRA must support judicial workflow without replacing judicial authority. The system should expose uncertainty, cite sources, avoid unsupported claims, require human approval for consequential actions, preserve auditability, and keep case data isolated.
+Jolly must support judicial workflow without replacing judicial authority. The system should expose uncertainty, cite sources, avoid unsupported claims, require human approval for consequential actions, preserve auditability, and keep case data isolated.
 
 ## Planning Documents
 
