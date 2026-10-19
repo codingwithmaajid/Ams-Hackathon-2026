@@ -36,6 +36,8 @@ Implemented application capabilities:
 - Configurable CORS origins for local frontend development.
 - Pytest coverage for root, health, and validation errors.
 
+- Web console (`frontend/`, branch `jolly/console`): Today (daily brief), Matters + matter detail (cited brief, timeline, tasks, documents with upload/search, Ask Jolly with citation chips and guardrail refusals), Call (outbound call, status polling, live Bolna webhook feed), How it works. Thin client over the API with a Render cold-start "waking up" state.
+
 ## IN PROGRESS
 
 - Milestone 4: post-hearing dictation -> timeline/tasks update + drafted client message with human approval.

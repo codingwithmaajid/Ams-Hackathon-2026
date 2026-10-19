@@ -27,7 +27,7 @@ class Settings:
     app_name: str = "Jolly"
     app_version: str = "0.2.0"
     log_level: str = "INFO"
-    cors_origins: tuple[str, ...] = ("http://localhost:5173",)
+    cors_origins: tuple[str, ...] = ("http://localhost:5173", "http://localhost:4173")
     database_url: Optional[str] = None
     llm_api_key: Optional[str] = None
     embedding_api_key: Optional[str] = None
@@ -50,7 +50,7 @@ class Settings:
 
 def get_settings() -> Settings:
     cors_origins = _parse_csv(
-        _get_env("CORS_ORIGINS", "http://localhost:5173")
+        _get_env("CORS_ORIGINS", "http://localhost:5173,http://localhost:4173")
     )
 
     return Settings(

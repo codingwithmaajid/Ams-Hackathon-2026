@@ -1,35 +1,31 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Sidebar, MobileHeader } from "@/components/layout/sidebar";
-import { StoreProvider } from "@/store";
-
-import HomePage from "@/pages/home";
-import CallsPage from "@/pages/calls";
-import EmailsPage from "@/pages/emails";
-import KnowledgePage from "@/pages/knowledge";
-import ReportsPage from "@/pages/reports";
-import HealthPage from "@/pages/health";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BackendProvider } from "@/lib/backend";
+import { DocumentViewerProvider } from "@/components/jolly/citations";
+import { Layout } from "@/components/jolly/layout";
+import TodayPage from "@/pages/today";
+import MattersPage from "@/pages/matters";
+import MatterPage from "@/pages/matter";
+import CallPage from "@/pages/call";
+import HowPage from "@/pages/how";
+import NotFoundPage from "@/pages/not-found";
 
 export default function App() {
   return (
     <BrowserRouter>
-      <StoreProvider>
-        <div className="flex h-dvh bg-background text-foreground font-sans antialiased min-h-full">
-          <Sidebar />
-          <div className="flex min-w-0 flex-1 flex-col">
-            <MobileHeader />
-            <main className="min-h-0 flex-1 overflow-hidden">
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/calls" element={<CallsPage />} />
-                <Route path="/emails" element={<EmailsPage />} />
-                <Route path="/knowledge" element={<KnowledgePage />} />
-                <Route path="/reports" element={<ReportsPage />} />
-                <Route path="/health" element={<HealthPage />} />
-              </Routes>
-            </main>
-          </div>
-        </div>
-      </StoreProvider>
+      <BackendProvider>
+        <DocumentViewerProvider>
+          <Layout>
+            <Routes>
+              <Route path="/" element={<TodayPage />} />
+              <Route path="/matters" element={<MattersPage />} />
+              <Route path="/matters/:caseId" element={<MatterPage />} />
+              <Route path="/call" element={<CallPage />} />
+              <Route path="/how" element={<HowPage />} />
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+          </Layout>
+        </DocumentViewerProvider>
+      </BackendProvider>
     </BrowserRouter>
   );
 }
