@@ -123,7 +123,7 @@ const SEED_EMAILS: Email[] = [
     id: 1,
     to: "sara@lumenworks.io",
     subject: "Revised quote + onboarding timeline",
-    body: "Hi Sara,\n\nAttaching the revised quote we discussed, plus the onboarding timeline for your team. Happy to walk through it on a short call this week.\n\nBest,\nAira (on behalf of Maya)",
+    body: "Hi Sara,\n\nAttaching the revised quote we discussed, plus the onboarding timeline for your team. Happy to walk through it on a short call this week.\n\nBest,\nJolly (on behalf of Maya)",
     status: "sent",
     sentAt: "today 08:57",
   },
@@ -131,7 +131,7 @@ const SEED_EMAILS: Email[] = [
     id: 2,
     to: "ops@northwind.com",
     subject: "Meeting notes — discovery call",
-    body: "Hi team,\n\nThanks for joining yesterday's discovery call. Summary of decisions and next steps is below. Let me know if I missed anything.\n\nBest,\nAira (on behalf of Maya)",
+    body: "Hi team,\n\nThanks for joining yesterday's discovery call. Summary of decisions and next steps is below. Let me know if I missed anything.\n\nBest,\nJolly (on behalf of Maya)",
     status: "sent",
     sentAt: "yesterday 17:30",
   },
@@ -204,7 +204,7 @@ Attendees: Sara Ito (Ops lead), Maya (us).
 
 ## Decisions
 - Onboarding starts Aug 30 with kickoff call booked.
-- Aira will run in suggest-mode for week one, then autonomous send for tier-1 replies.
+- Jolly will run in suggest-mode for week one, then autonomous send for tier-1 replies.
 
 ## Follow-ups
 - Send revised quote + onboarding timeline (done Aug 23).
@@ -272,7 +272,7 @@ const SEED_SOURCES: Source[] = [
 ];
 
 const DEFAULT_INSTRUCTIONS =
-  "You are Aira, operating on behalf of Maya (sales lead).\nVoice: warm, concise, professional. Always confirm next steps before ending a call.\nGoal: nurture open deals — Northwind pricing, LumenWorks onboarding — and log every touchpoint to Reports.";
+  "You are Jolly, operating on behalf of Maya (sales lead).\nVoice: warm, concise, professional. Always confirm next steps before ending a call.\nGoal: nurture open deals — Northwind pricing, LumenWorks onboarding — and log every touchpoint to Reports.";
 
 type StoreValue = {
   instructions: string;
