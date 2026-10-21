@@ -5,6 +5,7 @@
 
 - POST /bolna/tools/get-daily-brief custom function for the morning brief call
 - POST /bolna/tools/ask-case-question  cited answer to a free-form question about one case
+- POST /bolna/tools/log-hearing-update  post-hearing dictation -> pending draft for approval
 
 Case answers come from the case store and are source-grounded. Bolna is
 the voice layer; the legal reasoning stays in Jolly behind these endpoints.
@@ -25,7 +26,10 @@ from backend.models.bolna import (
     CaseQuestionRequest,
     CaseQuestionResponse,
     DailyBriefRequest,
+    HearingUpdateRequest,
+    HearingUpdateResponse,
 )
+from backend.services.dictation import create_update, spoken_confirmation
 from backend.services.qa import answer_question
 from backend.services.cases import DailyBrief, build_case_brief, build_daily_brief, find_case
 
@@ -136,3 +140,31 @@ def ask_case_question(
         case_id=case.id, found=True, spoken_answer=spoken, answerable=ans.answerable, mode=ans.mode,
         citations=[c.model_dump(mode="json") for c in ans.citations],
     )
+
+
+@router.post("/tools/log-hearing-update", response_model=HearingUpdateResponse)
+def log_hearing_update(
+    body: HearingUpdateRequest,
+    request: Request,
+    x_jolly_secret: str | None = Header(default=None),
+    secret: str | None = Query(default=None),
+    session: Session = Depends(get_session),
+) -> HearingUpdateResponse:
+    """Corridor dictation on a call -> pending draft. Never commits or sends anything."""
+    _check_secret(request, x_jolly_secret, secret)
+    query = body.case_id.strip()
+    case = find_case(session, query)
+    if case is None:
+        return HearingUpdateResponse(
+            case_id=query, found=False,
+            spoken_confirmation=f"I couldn't find a case matching {query}. Which case was this hearing for?",
+        )
+    if len(body.dictation.strip()) < 5:
+        return HearingUpdateResponse(
+            case_id=case.id, found=True,
+            spoken_confirmation="I didn't catch the update. What happened at the hearing, and what's the next date?",
+        )
+    upd = create_update(session, case, body.dictation, llm=request.app.state.llm, source="voice",
+                        execution_id=body.execution_id)
+    return HearingUpdateResponse(case_id=case.id, found=True, update_id=upd.id,
+                                 spoken_confirmation=spoken_confirmation(upd))
