@@ -57,3 +57,18 @@ class CaseQuestionResponse(BaseModel):
     answerable: bool = False
     mode: str = "not_found"
     citations: list[dict[str, Any]] = []
+
+
+class HearingUpdateRequest(BaseModel):
+    """Arguments for the `log_hearing_update` custom function."""
+
+    case_id: str
+    dictation: str
+    execution_id: str | None = None
+
+
+class HearingUpdateResponse(BaseModel):
+    case_id: str
+    found: bool
+    update_id: int | None = None
+    spoken_confirmation: str
