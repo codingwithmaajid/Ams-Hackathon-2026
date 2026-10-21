@@ -10,6 +10,10 @@ import type {
   ExecutionEvent,
   Health,
   HearingEvent,
+  HearingUpdate,
+  UpdateEdits,
+  UpdateMetrics,
+  UpdateStatus,
   SearchHit,
   Task,
   UploadResult,
@@ -102,4 +106,15 @@ export const api = {
     request<CallResponse>("/call", { ...post({ phone_number, ...(user_data ? { user_data } : {}) }), timeoutMs: 40000 }),
   callStatus: (callId: string) => request<CallStatus>(`/call/${enc(callId)}`),
   recentExecutions: () => request<ExecutionEvent[]>("/bolna/executions/recent"),
+  dictate: (id: string, text: string, hearing_date?: string) =>
+    request<HearingUpdate>(`/cases/${enc(id)}/dictations`, {
+      ...post({ text, ...(hearing_date ? { hearing_date } : {}) }),
+      timeoutMs: 60000,
+    }),
+  updates: (status?: UpdateStatus) => request<HearingUpdate[]>(`/updates${status ? `?status=${status}` : ""}`),
+  caseUpdates: (id: string) => request<HearingUpdate[]>(`/cases/${enc(id)}/updates`),
+  approveUpdate: (updateId: number, edits?: UpdateEdits) =>
+    request<HearingUpdate>(`/updates/${updateId}/approve`, edits ? post(edits) : { method: "POST" }),
+  rejectUpdate: (updateId: number) => request<HearingUpdate>(`/updates/${updateId}/reject`, { method: "POST" }),
+  updateMetrics: () => request<UpdateMetrics>("/updates/metrics"),
 };

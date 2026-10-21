@@ -7,6 +7,7 @@ import { StatusPill } from "./common";
 const NAV = [
   { to: "/", label: "Today", end: true },
   { to: "/matters", label: "Matters", end: false },
+  { to: "/approvals", label: "Approvals", end: false },
   { to: "/call", label: "Call", end: false },
   { to: "/how", label: "How it works", end: false },
 ];
