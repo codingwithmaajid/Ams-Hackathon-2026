@@ -69,3 +69,28 @@ class Task(SQLModel, table=True):
     status: str = "open"  # open | done
     source_doc_id: str | None = Field(default=None, foreign_key="document.id")
     created_at: datetime = Field(default_factory=_now)
+
+
+class HearingUpdate(SQLModel, table=True):
+    """A post-hearing dictation turned into a draft, waiting for one human approval.
+
+    Nothing here touches the case record until an advocate approves it:
+    approval writes the HearingEvent and Tasks, moves the next hearing date,
+    and releases the client message for sending.
+    """
+
+    id: int | None = Field(default=None, primary_key=True)
+    case_id: str = Field(foreign_key="case.id", index=True)
+    source: str = "console"  # console | voice
+    execution_id: str | None = Field(default=None, description="Bolna execution id when dictated on a call.")
+    dictation: str = Field(description="What the advocate said, verbatim.")
+    hearing_date: date
+    outcome: str
+    next_date: date | None = None
+    next_purpose: str | None = None
+    tasks_json: str = "[]"  # JSON list of {"title", "owner", "due"}
+    client_message: str = ""
+    extractor: str = "rules"  # gemini | rules
+    status: str = Field(default="pending", index=True)  # pending | approved | rejected
+    created_at: datetime = Field(default_factory=_now)
+    decided_at: datetime | None = None
