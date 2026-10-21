@@ -11,7 +11,7 @@ import { DiscoverButton } from './components/block/discover-button';
 
 export default function App() {
   const shouldReduceMotion = useReducedMotion();
-  const callUrl = getConsoleUrl('/call');
+  const callUrl = getConsoleUrl('/');
 
   const fadeUpProps = shouldReduceMotion
     ? {}
