@@ -13,4 +13,6 @@ rm -rf "$OUT"
 
 cp -r "$ROOT/landing/dist" "$OUT"
 cp -r "$ROOT/frontend/dist" "$OUT/home"
+# SPA fallback for the console (Cloudflare Pages / Netlify style; ignored elsewhere)
+printf "/home/*  /home/index.html  200\n" > "$OUT/_redirects"
 echo "Built $OUT (landing at /, console at /home/)"
