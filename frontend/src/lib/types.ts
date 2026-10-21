@@ -162,3 +162,50 @@ export interface Health {
   status: string;
   service: string;
 }
+
+// Post-hearing dictation drafts (one human approval before anything is saved or sent)
+export interface DraftTask {
+  title: string;
+  owner?: string | null;
+  due?: string | null;
+}
+
+export type UpdateStatus = "pending" | "approved" | "rejected";
+
+export interface HearingUpdate {
+  id: number;
+  case_id: string;
+  case_title: string;
+  case_number: string;
+  source: "console" | "voice" | string;
+  execution_id: string | null;
+  dictation: string;
+  hearing_date: string;
+  outcome: string;
+  next_date: string | null;
+  next_purpose: string | null;
+  tasks: DraftTask[];
+  client_message: string;
+  client_phone: string | null;
+  send_link: string | null;
+  extractor: "gemini" | "rules" | string;
+  status: UpdateStatus;
+  created_at: string;
+  decided_at: string | null;
+}
+
+export interface UpdateEdits {
+  outcome?: string;
+  next_date?: string | null;
+  next_purpose?: string | null;
+  tasks?: DraftTask[];
+  client_message?: string;
+}
+
+export interface UpdateMetrics {
+  pending: number;
+  approved: number;
+  rejected: number;
+  approved_unedited: number;
+  approved_unedited_share: number | null;
+}
