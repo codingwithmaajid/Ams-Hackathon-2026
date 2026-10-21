@@ -17,3 +17,4 @@ frontend/.vite
 # local SQLite case store
 jolly.db
 *.db-journal
+site-dist/
