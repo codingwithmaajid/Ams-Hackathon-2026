@@ -23,7 +23,6 @@ from pydantic import BaseModel, Field, ValidationError
 from sqlmodel import Session
 
 from backend.models.cases import Case, HearingEvent, HearingUpdate, Task
-from backend.services.embeddings import GEMINI_BASE
 
 logger = logging.getLogger(__name__)
 
@@ -157,19 +156,8 @@ def gemini_extract(llm, case: Case, text: str, hearing_date: date) -> Draft:
         hearing_date=hearing_date.isoformat(), title=case.title, case_number=case.case_number,
         court=case.court, client_name=case.client_name,
     )
-    resp = requests.post(
-        f"{GEMINI_BASE}/models/{llm.model}:generateContent",
-        headers={"x-goog-api-key": llm.api_key},
-        json={
-            "systemInstruction": {"parts": [{"text": prompt}]},
-            "contents": [{"role": "user", "parts": [{"text": f"<dictation>\n{text}\n</dictation>"}]}],
-            "generationConfig": {"temperature": 0.1, "responseMimeType": "application/json"},
-        },
-        timeout=llm.timeout,
-    )
-    resp.raise_for_status()
-    raw = resp.json()["candidates"][0]["content"]["parts"][0]["text"]
-    draft = Draft.model_validate(json.loads(raw))
+    data = llm.generate_json(prompt, f"<dictation>\n{text}\n</dictation>")
+    draft = Draft.model_validate(data)
     if draft.next_date and draft.next_date < hearing_date:
         draft.next_date = None
     if not draft.client_message.strip():
@@ -181,7 +169,7 @@ def extract(case: Case, text: str, hearing_date: date, llm=None) -> tuple[Draft,
     if llm is not None:
         try:
             return gemini_extract(llm, case, text, hearing_date), "gemini"
-        except (requests.RequestException, KeyError, IndexError, ValueError, ValidationError) as exc:
+        except (requests.RequestException, RuntimeError, KeyError, IndexError, ValueError, ValidationError) as exc:
             logger.warning("Gemini dictation extraction failed (%s); using rules.", exc)
     return rule_extract(case, text, hearing_date), "rules"
 

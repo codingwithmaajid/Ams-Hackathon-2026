@@ -128,3 +128,24 @@ def test_case_brief_tool_trims_and_finds_case() -> None:
     assert body["case_id"] == "1042"
     assert body["found"] is True
 
+
+
+def test_call_allowlist_blocks_other_numbers(monkeypatch: pytest.MonkeyPatch) -> None:
+    session = FakeSession(FakeResponse(200, {"status": "queued", "execution_id": "e"}))
+    client = make_client(replace(BASE, call_allowed_numbers=("+919876543210",)), session, monkeypatch)
+    assert client.post("/call", json={"phone_number": "+911111111111"}).status_code == 403
+    assert client.post("/call", json={"phone_number": "+919876543210"}).status_code == 200
+    assert len(session.calls) == 1
+
+
+def test_morning_call_needs_secret_and_places_call(monkeypatch: pytest.MonkeyPatch) -> None:
+    session = FakeSession(FakeResponse(200, {"status": "queued", "execution_id": "exec-am"}))
+    with make_client(replace(BASE, bolna_webhook_secret="s3"), session, monkeypatch) as client:
+        assert client.post("/briefs/morning-call?phone_number=%2B919876543210").status_code == 401
+        r = client.post("/briefs/morning-call?phone_number=%2B919876543210", headers={"x-bolna-secret": "s3"})
+        assert r.status_code == 200, r.text
+        body = r.json()
+        assert body["call_id"] == "exec-am" and body["spoken_summary"]
+        sent = session.calls[-1][2]["json"]
+        assert sent["recipient_phone_number"] == "+919876543210"
+        assert sent["user_data"]["call_type"] == "morning_brief"

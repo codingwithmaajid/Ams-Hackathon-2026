@@ -33,6 +33,7 @@ class Settings:
     embedding_api_key: Optional[str] = None
     # Google AI Studio free tier; no billing needed.
     llm_model: str = "gemini-3.8-flash"
+    llm_fallback_models: tuple[str, ...] = ()
     embedding_model: str = "gemini-embedding-2"
     storage_bucket: Optional[str] = None
     vector_database_url: Optional[str] = None
@@ -44,6 +45,8 @@ class Settings:
     # Shared secret Bolna sends back to us (query param or header) on
     # webhooks and custom-function tool calls. Optional for local dev.
     bolna_webhook_secret: Optional[str] = None
+    # Optional allowlist for POST /call (comma-separated E.164).
+    call_allowed_numbers: tuple[str, ...] = ()
     # Load the synthetic demo matters into an empty database on startup.
     seed_demo_data: bool = True
 
@@ -63,6 +66,7 @@ def get_settings() -> Settings:
         llm_api_key=_get_optional_env("LLM_API_KEY"),
         embedding_api_key=_get_optional_env("EMBEDDING_API_KEY") or _get_optional_env("LLM_API_KEY"),
         llm_model=_get_env("LLM_MODEL", "gemini-3.8-flash"),
+        llm_fallback_models=tuple(_parse_csv(_get_env("LLM_FALLBACK_MODELS", "gemini-flash-lite-latest,gemini-2.5-flash-lite,gemini-flash-latest,gemini-2.5-flash"))),
         embedding_model=_get_env("EMBEDDING_MODEL", "gemini-embedding-2"),
         storage_bucket=_get_optional_env("STORAGE_BUCKET"),
         vector_database_url=_get_optional_env("VECTOR_DATABASE_URL"),
@@ -71,5 +75,6 @@ def get_settings() -> Settings:
         bolna_agent_id=_get_optional_env("BOLNA_AGENT_ID"),
         bolna_from_number=_get_optional_env("BOLNA_FROM_NUMBER"),
         bolna_webhook_secret=_get_optional_env("BOLNA_WEBHOOK_SECRET"),
+        call_allowed_numbers=tuple(_parse_csv(_get_env("CALL_ALLOWED_NUMBERS", ""))),
         seed_demo_data=_get_env("SEED_DEMO_DATA", "true").lower() in ("1", "true", "yes"),
     )
