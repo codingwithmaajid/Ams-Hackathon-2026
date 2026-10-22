@@ -5,8 +5,14 @@ details live in `backend.services.bolna_client`.
 """
 
 import re
+from datetime import date
 
-from fastapi import APIRouter, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, status
+from pydantic import BaseModel
+from sqlmodel import Session
+
+from backend.core.db import get_session
+from backend.services.cases import build_daily_brief
 
 from backend.models.calls import CallRequest, CallResponse, CallStatusResponse
 from backend.services.bolna_client import TERMINAL_STATUSES, BolnaClient
@@ -20,6 +26,15 @@ def _get_client(request: Request) -> BolnaClient:
     return BolnaClient(request.app.state.settings)
 
 
+def _check_allowed(request: Request, phone: str) -> None:
+    """CALL_ALLOWED_NUMBERS (comma-separated E.164) stops a public page from
+    making Jolly ring arbitrary numbers on our Bolna credit. Unset = open."""
+    allowed = request.app.state.settings.call_allowed_numbers
+    if allowed and phone not in allowed:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail="This number is not on Jolly's demo allowlist.")
+
+
 @router.post("/call", response_model=CallResponse, status_code=status.HTTP_200_OK)
 async def trigger_call(payload: CallRequest, request: Request) -> CallResponse:
     phone = re.sub(r"[\s-]", "", payload.phone_number or "")
@@ -30,6 +45,7 @@ async def trigger_call(payload: CallRequest, request: Request) -> CallResponse:
             detail="A valid phone number in E.164 format (e.g. +919876543210) is required.",
         )
 
+    _check_allowed(request, phone)
     client = _get_client(request)
     data = client.place_call(phone, agent_id=payload.agent_id, user_data=payload.user_data)
 
@@ -60,4 +76,41 @@ async def get_call_status(call_id: str, request: Request) -> CallStatusResponse:
         summary=data.get("summary"),
         recording_url=telephony.get("recording_url"),
         error_message=data.get("error_message"),
+    )
+
+
+class MorningCallResponse(CallResponse):
+    matters: int
+    spoken_summary: str
+
+
+@router.post("/briefs/morning-call", response_model=MorningCallResponse)
+def morning_call(
+    request: Request,
+    phone_number: str = Query(..., description="Advocate's phone, E.164"),
+    advocate: str | None = None,
+    x_bolna_secret: str | None = Header(default=None),
+    secret: str | None = Query(default=None),
+    session: Session = Depends(get_session),
+) -> MorningCallResponse:
+    """The 8 AM call. Builds today's brief first (which also wakes a sleeping
+    free-tier backend), then has Bolna ring the advocate. Needs the shared
+    secret so only our scheduler can trigger it."""
+    expected = request.app.state.settings.bolna_webhook_secret
+    if expected and (x_bolna_secret or secret) != expected:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid secret.")
+    phone = re.sub(r"[\s-]", "", phone_number)
+    if not E164.match(phone):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Phone must be E.164.")
+    brief = build_daily_brief(session, day=date.today(), advocate=advocate)
+    data = _get_client(request).place_call(
+        phone,
+        user_data={"call_type": "morning_brief", "date": brief.date.isoformat(), "matters_today": str(len(brief.matters))},
+    )
+    return MorningCallResponse(
+        status=str(data.get("status", "queued")),
+        message=f"Morning brief call to {phone}",
+        call_id=data.get("execution_id"),
+        matters=len(brief.matters),
+        spoken_summary=brief.spoken_summary,
     )
