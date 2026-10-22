@@ -1,0 +1,41 @@
+# Jolly's 8 AM call.
+# 1. Wakes the free-tier backend a few minutes early (Render sleeps after 15 min idle).
+# 2. If the repo variable MORNING_CALL_ENABLED is "true", asks the backend to
+#    ring ADVOCATE_PHONE with today's brief.
+# Setup (repo Settings -> Secrets and variables -> Actions):
+#   secrets:   JOLLY_BACKEND_URL, BOLNA_WEBHOOK_SECRET, ADVOCATE_PHONE (E.164)
+#   variables: MORNING_CALL_ENABLED = true   (leave unset to only warm up)
+name: Morning brief
+
+on:
+  schedule:
+    - cron: "15 2 * * 1-6"   # 07:45 IST Mon-Sat: wake up
+    - cron: "30 2 * * 1-6"   # 08:00 IST Mon-Sat: call
+  workflow_dispatch:
+    inputs:
+      call:
+        description: "Place the call now (otherwise just warm up)"
+        type: boolean
+        default: true
+
+jobs:
+  brief:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Wake the backend
+        run: |
+          for i in 1 2 3 4 5 6; do
+            curl -fsS -m 60 "${{ secrets.JOLLY_BACKEND_URL }}/health" && exit 0 || sleep 15
+          done
+          exit 1
+      - name: Place the morning call
+        if: >-
+          (github.event_name == 'workflow_dispatch' && inputs.call) ||
+          (github.event.schedule == '30 2 * * 1-6' && vars.MORNING_CALL_ENABLED == 'true')
+        env:
+          P: ${{ secrets.ADVOCATE_PHONE }}
+        run: |
+          curl -fsS -m 60 -X POST \
+            -H "x-bolna-secret: ${{ secrets.BOLNA_WEBHOOK_SECRET }}" \
+            "${{ secrets.JOLLY_BACKEND_URL }}/briefs/morning-call?phone_number=${P/+/%2B}"
